@@ -1,4 +1,4 @@
-// lib/types.ts
+// src/lib/types.ts
 export type ProductType = "UNSTITCHED" | "STITCHED";
 
 export interface Product {
@@ -6,13 +6,22 @@ export interface Product {
   slug: string;
   name: string;
   type: ProductType; // stitched or unstitched
-  fabricType: string; // e.g. "Lawn", "Khaddar", "Wash & Wear", "Boski"
+
+  // e.g. "Lawn", "Khaddar", "Wash & Wear", "Boski"
+  fabricType: string;
+
   season?: "Summer" | "Winter" | "AllSeason";
-  pricePKR: number;
+
+  // Numeric price in PKR
+  pricePKR?: number;
+
   gallery?: string[];
   description: string;
+
   gsm?: number;
   widthInches?: number;
   cutLengthMeters?: number;
-  tags: string[]; // e.g. ["men", "unstitched", "wash-and-wear"]
+
+  // e.g. ["men", "unstitched", "wash-and-wear"]
+  tags: string[];
 }

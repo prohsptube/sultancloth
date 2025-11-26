@@ -1,17 +1,13 @@
 // src/components/product/ProductCard.tsx
 import Link from "next/link";
-import { Product } from "@/lib/types";
+import type { Product } from "@/lib/types";
 
-function formatPrice(price: Product["price"]): string {
-  if (typeof price === "number") {
+function formatPrice(price: Product["pricePKR"]): string {
+  if (typeof price === "number" && !Number.isNaN(price)) {
     return `PKR ${price.toLocaleString()}`;
   }
-  if (typeof price === "string" && price.trim().length > 0) {
-    // In case price is stored as "3,800" etc.
-    return `PKR ${price}`;
-  }
-  // Fallback – very rare, but avoids runtime crash
-  return "PKR 0";
+  // Safe fallback label
+  return "Price on Request";
 }
 
 interface ProductCardProps {
@@ -19,7 +15,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const priceLabel = formatPrice(product.price);
+  const priceLabel = formatPrice(product.pricePKR);
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-[#050509] shadow-[0_18px_45px_rgba(0,0,0,0.75)] transition hover:-translate-y-1 hover:border-amber-500">
@@ -30,10 +26,10 @@ export function ProductCard({ product }: ProductCardProps) {
           {product.type === "UNSTITCHED" ? "Unstitched Fabric" : "Stitched Outfit"}
         </div>
 
-        {/* Category / fabric name top-right */}
-        {product.category && (
+        {/* Fabric name / category top-right (Lawn, Khaddar, etc.) */}
+        {product.fabricType && (
           <div className="absolute right-4 top-3 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-300">
-            {product.category}
+            {product.fabricType}
           </div>
         )}
       </div>
@@ -41,9 +37,7 @@ export function ProductCard({ product }: ProductCardProps) {
       {/* Content */}
       <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
         {/* Title */}
-        <h3 className="text-sm font-semibold text-zinc-50">
-          {product.name}
-        </h3>
+        <h3 className="text-sm font-semibold text-zinc-50">{product.name}</h3>
 
         {/* Description */}
         {product.description && (
