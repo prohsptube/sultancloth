@@ -4,15 +4,15 @@ import { getProductsCollection } from "@/lib/mongodb";
 import { checkAdminAuth } from "@/lib/auth";
 import { ObjectId } from "mongodb";
 
+type RouteContext = { params: Promise<{ id: string }> };
+
 // GET single product
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: RouteContext) {
   try {
+    const { id } = await params;
     const products = await getProductsCollection();
     const product = await products.findOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(id),
     });
 
     if (!product) {
@@ -30,20 +30,18 @@ export async function GET(
 }
 
 // PUT - Update product
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, { params }: RouteContext) {
   try {
     // Check admin authentication
     const authError = checkAdminAuth(request);
     if (authError) return authError;
 
+    const { id } = await params;
     const body = await request.json();
     const products = await getProductsCollection();
 
     const result = await products.updateOne(
-      { _id: new ObjectId(params.id) },
+      { _id: new ObjectId(id) },
       {
         $set: {
           ...body,
@@ -67,18 +65,16 @@ export async function PUT(
 }
 
 // DELETE product
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: RouteContext) {
   try {
     // Check admin authentication
     const authError = checkAdminAuth(request);
     if (authError) return authError;
 
+    const { id } = await params;
     const products = await getProductsCollection();
     const result = await products.deleteOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(id),
     });
 
     if (result.deletedCount === 0) {
