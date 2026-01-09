@@ -7,14 +7,18 @@ import { ObjectId } from "mongodb";
 // GET all products
 export async function GET(request: NextRequest) {
   try {
+    console.log("[API] GET /api/products - Starting...");
+    console.log("[API] MONGODB_URI exists:", !!process.env.MONGODB_URI);
+    
     const products = await getProductsCollection();
     const allProducts = await products.find({}).toArray();
     
+    console.log("[API] Found products:", allProducts.length);
     return NextResponse.json(allProducts);
   } catch (error) {
-    console.error("GET /api/products error:", error);
+    console.error("[API] GET /api/products error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch products" },
+      { error: error instanceof Error ? error.message : "Failed to fetch products" },
       { status: 500 }
     );
   }
@@ -23,9 +27,16 @@ export async function GET(request: NextRequest) {
 // POST - Create new product
 export async function POST(request: NextRequest) {
   try {
+    console.log("[API] POST /api/products - Starting...");
+    console.log("[API] Cookies:", request.cookies.getAll());
+    
     // Check admin authentication
     const authError = checkAdminAuth(request);
-    if (authError) return authError;
+    if (authError) {
+      console.log("[API] Auth check failed");
+      return authError;
+    }
+    console.log("[API] Auth check passed");
 
     const body = await request.json();
 
