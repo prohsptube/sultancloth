@@ -6,9 +6,9 @@ import { Footer } from "@/components/layout/Footer";
 import { FloatingWhatsApp } from "@/components/layout/FloatingWhatsApp";
 
 export const metadata: Metadata = {
-  title: "Sultan Cloth | Premium Stitched & Unstitched Fabrics",
+  title: "Sultan Tag | Premium Stitched & Unstitched Fabrics",
   description:
-    "Sultan Cloth offers premium stitched and unstitched fabrics from Pakistan with global shipping. Lawn, Khaddar, Wash & Wear, Boski and more.",
+    "Sultan Tag offers premium stitched and unstitched fabrics from Pakistan with global shipping. Lawn, Khaddar, Wash & Wear, Boski and more.",
 };
 
 export default function RootLayout({
