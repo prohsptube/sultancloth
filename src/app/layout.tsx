@@ -9,6 +9,9 @@ export const metadata: Metadata = {
   title: "Sultan Tag | Premium Stitched & Unstitched Fabrics",
   description:
     "Sultan Tag offers premium stitched and unstitched fabrics from Pakistan with global shipping. Lawn, Khaddar, Wash & Wear, Boski and more.",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
