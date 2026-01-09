@@ -19,6 +19,7 @@ interface Category {
   name: string;
   slug: string;
   description?: string;
+  parentId?: string | null;
 }
 
 export default function AdminDashboard() {
@@ -41,7 +42,10 @@ export default function AdminDashboard() {
     name: "",
     slug: "",
     description: "",
+    parentId: null as string | null,
   });
+  const [selectedMainCategory, setSelectedMainCategory] = useState("");
+  const [selectedSubCategory, setSelectedSubCategory] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -84,8 +88,9 @@ export default function AdminDashboard() {
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!productFormData.name || !productFormData.price) {
-      setError("Name and price are required");
+    const categoryToUse = selectedSubCategory || selectedMainCategory;
+    if (!productFormData.name || !productFormData.price || !categoryToUse) {
+      setError("Name, price, and category are required");
       return;
     }
 
@@ -97,6 +102,7 @@ export default function AdminDashboard() {
 
       const payload = {
         ...productFormData,
+        category: categoryToUse,
         price: parseFloat(productFormData.price),
       };
 
@@ -111,6 +117,8 @@ export default function AdminDashboard() {
         setProductFormData({ name: "", category: "men", price: "", description: "" });
         setEditingProductId(null);
         setShowProductForm(false);
+        setSelectedMainCategory("");
+        setSelectedSubCategory("");
         await fetchProducts();
       } else {
         const data = await response.json();
@@ -225,8 +233,18 @@ export default function AdminDashboard() {
   const handleCancelCategoryForm = () => {
     setShowCategoryForm(false);
     setEditingCategoryId(null);
-    setCategoryFormData({ name: "", slug: "", description: "" });
+    setCategoryFormData({ name: "", slug: "", description: "", parentId: null });
+    setSelectedMainCategory("");
+    setSelectedSubCategory("");
   };
+
+  // Get main categories (those without parentId)
+  const mainCategories = categories.filter((cat) => !cat.parentId);
+
+  // Get subcategories for selected main category
+  const subCategories = selectedMainCategory
+    ? categories.filter((cat) => cat.parentId === selectedMainCategory)
+    : [];
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -305,20 +323,41 @@ export default function AdminDashboard() {
                         Category
                       </label>
                       <select
-                        value={productFormData.category}
-                        onChange={(e) =>
-                          setProductFormData({ ...productFormData, category: e.target.value })
-                        }
+                        value={selectedMainCategory}
+                        onChange={(e) => {
+                          setSelectedMainCategory(e.target.value);
+                          setSelectedSubCategory("");
+                        }}
                         className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
                       >
                         <option value="">Select Category</option>
-                        {categories.map((cat) => (
-                          <option key={cat._id} value={cat.slug}>
+                        {mainCategories.map((cat) => (
+                          <option key={cat._id} value={cat._id}>
                             {cat.name}
                           </option>
                         ))}
                       </select>
                     </div>
+
+                    {selectedMainCategory && subCategories.length > 0 && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Sub Category
+                        </label>
+                        <select
+                          value={selectedSubCategory}
+                          onChange={(e) => setSelectedSubCategory(e.target.value)}
+                          className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                        >
+                          <option value="">Select Sub Category</option>
+                          {subCategories.map((cat) => (
+                            <option key={cat._id} value={cat.slug}>
+                              {cat.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -441,6 +480,64 @@ export default function AdminDashboard() {
                 <form onSubmit={handleAddCategory} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Type
+                    </label>
+                    <div className="flex gap-4 mb-4">
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="categoryType"
+                          value="main"
+                          checked={!categoryFormData.parentId}
+                          onChange={() =>
+                            setCategoryFormData({ ...categoryFormData, parentId: null })
+                          }
+                        />
+                        <span className="text-sm text-gray-700">Main Category</span>
+                      </label>
+                      <label className="flex items-center gap-2">
+                        <input
+                          type="radio"
+                          name="categoryType"
+                          value="sub"
+                          checked={categoryFormData.parentId !== null}
+                          onChange={() =>
+                            setCategoryFormData({
+                              ...categoryFormData,
+                              parentId: mainCategories[0]?._id || "",
+                            })
+                          }
+                        />
+                        <span className="text-sm text-gray-700">Sub Category</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {categoryFormData.parentId !== null && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Parent Category
+                      </label>
+                      <select
+                        value={categoryFormData.parentId || ""}
+                        onChange={(e) =>
+                          setCategoryFormData({ ...categoryFormData, parentId: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                        required
+                      >
+                        <option value="">Select Parent Category</option>
+                        {mainCategories.map((cat) => (
+                          <option key={cat._id} value={cat._id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Category Name
                     </label>
                     <input
@@ -524,30 +621,50 @@ export default function AdminDashboard() {
                     <tr>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Name</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Slug</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Type</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {categories.map((category) => (
-                      <tr key={category._id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm text-gray-800">{category.name}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{category.slug}</td>
-                        <td className="px-6 py-4 text-sm flex gap-2">
-                          <button
-                            onClick={() => handleEditCategory(category)}
-                            className="text-blue-600 hover:text-blue-800 transition"
-                          >
-                            <Edit size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCategory(category._id)}
-                            className="text-red-600 hover:text-red-800 transition"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {categories.map((category) => {
+                      const parentCategory = category.parentId
+                        ? categories.find((c) => c._id === category.parentId)
+                        : null;
+                      return (
+                        <tr key={category._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 text-sm text-gray-800">
+                            {parentCategory ? (
+                              <div>
+                                <div className="text-xs text-gray-500">
+                                  {parentCategory.name} &gt;
+                                </div>
+                                <div className="ml-4">{category.name}</div>
+                              </div>
+                            ) : (
+                              <div className="font-semibold">{category.name}</div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{category.slug}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            {parentCategory ? "Sub" : "Main"}
+                          </td>
+                          <td className="px-6 py-4 text-sm flex gap-2">
+                            <button
+                              onClick={() => handleEditCategory(category)}
+                              className="text-blue-600 hover:text-blue-800 transition"
+                            >
+                              <Edit size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCategory(category._id)}
+                              className="text-red-600 hover:text-red-800 transition"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

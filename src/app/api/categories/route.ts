@@ -38,7 +38,10 @@ export async function POST(request: NextRequest) {
 
     const categories = await getCategoriesCollection();
     const result = await categories.insertOne({
-      ...body,
+      name: body.name,
+      slug: body.slug,
+      description: body.description || "",
+      parentId: body.parentId || null,
       createdAt: new Date(),
       updatedAt: new Date(),
     });
