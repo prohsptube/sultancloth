@@ -70,6 +70,7 @@ export default function AdminDashboard() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           ...formData,
           price: parseFloat(formData.price),
@@ -110,6 +111,7 @@ export default function AdminDashboard() {
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
       });
 
       if (response.ok) {
@@ -170,7 +172,7 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
+                    className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
                     required
                   />
                 </div>
@@ -184,7 +186,7 @@ export default function AdminDashboard() {
                     onChange={(e) =>
                       setFormData({ ...formData, category: e.target.value })
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
+                    className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
                   >
                     <option value="men">Men</option>
                     <option value="women">Women</option>
@@ -205,7 +207,7 @@ export default function AdminDashboard() {
                       setFormData({ ...formData, price: e.target.value })
                     }
                     step="0.01"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
+                    className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
                     required
                   />
                 </div>
@@ -221,7 +223,7 @@ export default function AdminDashboard() {
                     setFormData({ ...formData, description: e.target.value })
                   }
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none"
+                  className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
                 />
               </div>
 
