@@ -1,12 +1,8 @@
 // src/app/page.tsx
 import { Container } from "@/components/layout/Container";
 import { HeroCarousel } from "@/components/layout/HeroCarousel";
-import { ProductGrid } from "@/components/product/ProductGrid";
-import { products } from "@/lib/products";
 
 export default function HomePage() {
-  const unstitched = products.filter((p) => p.type === "UNSTITCHED");
-  const stitched = products.filter((p) => p.type === "STITCHED");
 
   return (
     <>
@@ -94,23 +90,6 @@ export default function HomePage() {
         </Container>
       </section>
 
-      {/* UNSTITCHED GRID */}
-      <Container className="py-10 md:py-12">
-        <ProductGrid
-          title="Unstitched Fabrics"
-          subtitle="Lawn, Khaddar, Wash & Wear and more – for your own tailor or our custom stitching."
-          products={unstitched}
-        />
-
-        {/* STITCHED GRID */}
-        <div className="mt-10 md:mt-12">
-          <ProductGrid
-            title="Stitched Outfits"
-            subtitle="Ready-to-wear pieces crafted from Sultan fabrics."
-            products={stitched}
-          />
-        </div>
-      </Container>
     </>
   );
 }

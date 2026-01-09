@@ -51,6 +51,38 @@ export const mainNavigation: NavMenu[] = [
     ],
   },
   {
+    label: "UNSTITCHED",
+    href: "/collections/unstitched",
+    categories: [
+      {
+        label: "Men",
+        href: "/collections/unstitched-men",
+        subItems: [
+          { label: "Wash & Wear", href: "/collections/unstitched-men-wash-wear" },
+          { label: "Latha / Cotton", href: "/collections/unstitched-men-cotton" },
+          { label: "Winter Khaddar", href: "/collections/unstitched-men-khaddar" },
+        ],
+      },
+      {
+        label: "Women",
+        href: "/collections/unstitched-women",
+        subItems: [
+          { label: "Printed", href: "/collections/unstitched-women-printed" },
+          { label: "Embroidered", href: "/collections/unstitched-women-embroidered" },
+          { label: "Festive", href: "/collections/unstitched-women-festive" },
+        ],
+      },
+      {
+        label: "Premium",
+        href: "/collections/unstitched-premium",
+        subItems: [
+          { label: "Boski", href: "/collections/unstitched-boski" },
+          { label: "Blended", href: "/collections/unstitched-blended" },
+        ],
+      },
+    ],
+  },
+  {
     label: "MEN",
     href: "/pages/mens-clothing",
     categories: [

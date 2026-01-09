@@ -7,8 +7,8 @@ export function MegaMenu() {
   return (
     <nav className="border-t border-red-200 bg-white/98 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
-        {/* Menu items - left aligned */}
-        <div className="flex items-center">
+        {/* Menu items - centered */}
+        <div className="flex items-center justify-center flex-wrap">
           {mainNavigation.map((item) => (
             <div key={item.label} className="group relative">
               {/* Main Menu Item */}
