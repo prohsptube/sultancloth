@@ -209,9 +209,13 @@ export default function AdminDashboard() {
       name: category.name,
       slug: category.slug,
       description: category.description || "",
-    });
-    setShowCategoryForm(true);
-  };
+       parentId: category.parentId || null,
+     });
+     if (category.parentId) {
+       setSelectedMainCategory(category.parentId);
+     }
+     setShowCategoryForm(true);
+   };
 
   const handleDeleteCategory = async (id: string) => {
     if (!confirm("Delete this category?")) return;
