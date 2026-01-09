@@ -7,22 +7,22 @@ export function Header() {
   return (
     <header className="sticky top-0 z-50 border-b-2 border-red-600 bg-white backdrop-blur supports-[backdrop-filter]:backdrop-blur-lg shadow-lg">
       {/* TOP HEADER ROW */}
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6">
-        {/* LEFT: LOGO */}
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 md:px-6">
+        {/* LEFT: LOGO - More Prominent */}
         <Link href="/" className="flex items-center flex-shrink-0">
-          <div className="relative h-10 w-40">
+          <div className="relative h-14 w-48">
             <Image
               src="/sultan-logo.png"
               alt="Sultan Cloth"
               fill
-              className="object-contain drop-shadow-[0_2px_4px_rgba(220,38,38,0.2)]"
+              className="object-contain drop-shadow-[0_2px_6px_rgba(220,38,38,0.25)]"
               priority
             />
           </div>
         </Link>
 
         {/* CENTER: SEARCH BAR */}
-        <div className="hidden md:flex flex-1 mx-8 items-center">
+        <div className="hidden md:flex flex-1 mx-6 items-center">
           <div className="relative w-full max-w-sm">
             <input
               type="text"
@@ -34,7 +34,7 @@ export function Header() {
         </div>
 
         {/* RIGHT: ACCOUNT & CART */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {/* Mobile Search */}
           <button
             className="md:hidden text-gray-700 hover:text-red-600 transition"
