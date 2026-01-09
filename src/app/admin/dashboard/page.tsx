@@ -54,6 +54,7 @@ export default function AdminDashboard() {
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     if (!formData.name || !formData.price) {
       setError("Name and price are required");
       return;
@@ -65,17 +66,25 @@ export default function AdminDashboard() {
         ? `/api/products/${editingId}`
         : "/api/products";
 
+      const payload = {
+        ...formData,
+        price: parseFloat(formData.price),
+      };
+
+      console.log("Submitting product:", payload);
+
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
         },
         credentials: "include",
-        body: JSON.stringify({
-          ...formData,
-          price: parseFloat(formData.price),
-        }),
+        body: JSON.stringify(payload),
       });
+
+      console.log("Response status:", response.status);
+      const responseData = await response.json();
+      console.log("Response data:", responseData);
 
       if (response.ok) {
         setFormData({ name: "", category: "men", price: "", description: "" });
@@ -83,11 +92,11 @@ export default function AdminDashboard() {
         setShowForm(false);
         await fetchProducts();
       } else {
-        setError("Error saving product");
+        setError(responseData.error || "Error saving product");
       }
     } catch (err) {
-      setError("Error saving product");
-      console.error(err);
+      console.error("Error:", err);
+      setError(err instanceof Error ? err.message : "Error saving product");
     }
   };
 
