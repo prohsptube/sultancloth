@@ -18,17 +18,17 @@ export function ProductCard({ product }: ProductCardProps) {
   const priceLabel = formatPrice(product.pricePKR);
 
   return (
-    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-zinc-800 bg-[#050509] shadow-[0_18px_45px_rgba(0,0,0,0.75)] transition hover:-translate-y-1 hover:border-amber-500">
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border-2 border-red-200 bg-white shadow-lg transition hover:-translate-y-1 hover:border-red-600 hover:shadow-xl">
       {/* Image placeholder / top band */}
-      <div className="relative h-32 w-full overflow-hidden bg-gradient-to-tr from-zinc-950 via-zinc-900 to-black">
+      <div className="relative h-32 w-full overflow-hidden bg-gradient-to-tr from-red-100 via-red-50 to-white">
         {/* Fabric type label top-left */}
-        <div className="absolute left-4 top-3 rounded-full bg-black/70 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-amber-300">
+        <div className="absolute left-4 top-3 rounded-full bg-red-600 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
           {product.type === "UNSTITCHED" ? "Unstitched Fabric" : "Stitched Outfit"}
         </div>
 
         {/* Fabric name / category top-right (Lawn, Khaddar, etc.) */}
         {product.fabricType && (
-          <div className="absolute right-4 top-3 text-[10px] font-medium uppercase tracking-[0.18em] text-zinc-300">
+          <div className="absolute right-4 top-3 text-[10px] font-medium uppercase tracking-[0.18em] text-gray-700">
             {product.fabricType}
           </div>
         )}
@@ -37,18 +37,18 @@ export function ProductCard({ product }: ProductCardProps) {
       {/* Content */}
       <div className="flex flex-1 flex-col px-5 pb-5 pt-4">
         {/* Title */}
-        <h3 className="text-sm font-semibold text-zinc-50">{product.name}</h3>
+        <h3 className="text-sm font-semibold text-gray-800">{product.name}</h3>
 
         {/* Description */}
         {product.description && (
-          <p className="mt-2 line-clamp-3 text-xs text-zinc-400">
+          <p className="mt-2 line-clamp-3 text-xs text-gray-600">
             {product.description}
           </p>
         )}
 
         {/* Price + season */}
-        <div className="mt-4 flex items-center justify-between text-[11px] text-zinc-400">
-          <div className="font-semibold text-amber-400">
+        <div className="mt-4 flex items-center justify-between text-[11px] text-gray-600">
+          <div className="font-semibold text-red-600">
             {priceLabel}
           </div>
 
@@ -63,7 +63,7 @@ export function ProductCard({ product }: ProductCardProps) {
         <div className="mt-4 flex">
           <Link
             href={product.slug ? `/product/${product.slug}` : "#"}
-            className="flex flex-1 items-center justify-center rounded-full border border-amber-500 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-amber-300 transition hover:bg-amber-500 hover:text-black"
+            className="flex flex-1 items-center justify-center rounded-full border-2 border-red-600 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-red-600 transition hover:bg-red-600 hover:text-white"
           >
             View Details
           </Link>

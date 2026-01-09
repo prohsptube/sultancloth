@@ -5,7 +5,7 @@ import { MegaMenu } from "./MegaMenu";
 
 export function Header() {
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-800 bg-zinc-950/95 backdrop-blur supports-[backdrop-filter]:backdrop-blur-lg">
+    <header className="sticky top-0 z-50 border-b-2 border-red-600 bg-white backdrop-blur supports-[backdrop-filter]:backdrop-blur-lg shadow-lg">
       {/* TOP HEADER ROW */}
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6">
         {/* LEFT: LOGO */}
@@ -15,7 +15,7 @@ export function Header() {
               src="/sultan-logo.png"
               alt="Sultan Cloth"
               fill
-              className="object-contain drop-shadow-[0_2px_4px_rgba(0,0,0,0.6)]"
+              className="object-contain drop-shadow-[0_2px_4px_rgba(220,38,38,0.2)]"
               priority
             />
           </div>
@@ -27,9 +27,9 @@ export function Header() {
             <input
               type="text"
               placeholder="Search products..."
-              className="w-full rounded-full border border-zinc-700 bg-zinc-900/50 px-4 py-2 text-sm text-zinc-200 placeholder-zinc-500 focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-400/30"
+              className="w-full rounded-full border-2 border-red-300 bg-white/80 px-4 py-2 text-sm text-gray-800 placeholder-gray-500 focus:border-red-600 focus:outline-none focus:ring-2 focus:ring-red-400/30"
             />
-            <Search className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+            <Search className="absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-red-500" />
           </div>
         </div>
 
@@ -37,7 +37,7 @@ export function Header() {
         <div className="flex items-center gap-3">
           {/* Mobile Search */}
           <button
-            className="md:hidden text-zinc-300 hover:text-amber-400 transition"
+            className="md:hidden text-gray-700 hover:text-red-600 transition"
             aria-label="Search"
           >
             <Search className="h-5 w-5" />
@@ -45,7 +45,7 @@ export function Header() {
 
           {/* Account Button */}
           <button
-            className="hidden sm:flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-xs text-zinc-200 transition hover:border-amber-500 hover:text-amber-300"
+            className="hidden sm:flex items-center gap-2 rounded-full border-2 border-red-500 bg-white px-3 py-2 text-xs text-gray-700 transition hover:bg-red-50 hover:border-red-700 hover:text-red-700"
             aria-label="My Account"
           >
             <User className="h-4 w-4" />
@@ -54,11 +54,11 @@ export function Header() {
 
           {/* Cart Button */}
           <button
-            className="flex items-center gap-2 rounded-full border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-xs text-zinc-200 transition hover:border-amber-500 hover:text-amber-300"
+            className="flex items-center gap-2 rounded-full border-2 border-red-600 bg-red-600 px-3 py-2 text-xs text-white transition hover:bg-red-700 hover:border-red-700 shadow-md"
             aria-label="Shopping Cart"
           >
             <ShoppingBag className="h-4 w-4" />
-            <span className="text-xs">0</span>
+            <span className="text-xs font-bold">0</span>
           </button>
         </div>
       </div>
