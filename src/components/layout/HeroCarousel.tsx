@@ -1,65 +1,92 @@
 // src/components/layout/HeroCarousel.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
-interface HeroSlide {
-  id: number;
+type HeroSlide = {
+  _id?: string;
+  id?: number;
   title: string;
   subtitle: string;
-  image: string;
-  cta: {
-    label: string;
-    href: string;
-  };
-}
+  image: string; // can be a gradient (e.g. linear-gradient) or a URL
+  ctaLabel: string;
+  ctaHref: string;
+};
 
-const heroSlides: HeroSlide[] = [
+const FALLBACK_SLIDES: HeroSlide[] = [
   {
     id: 1,
     title: "Premium Stitched & Unstitched Fabrics",
     subtitle: "Crafted in Pakistan • Shipped Worldwide",
     image: "linear-gradient(135deg, #dc2626 0%, #991b1b 100%)",
-    cta: { label: "Shop Now", href: "/collections" },
+    ctaLabel: "Shop Now",
+    ctaHref: "/collections",
   },
   {
     id: 2,
     title: "Summer Lawn Collection 2025",
     subtitle: "Lightweight • Breathable • Elegant",
     image: "linear-gradient(135deg, #fbbf24 0%, #d97706 100%)",
-    cta: { label: "Explore Summer", href: "/collections/summer-lawn" },
+    ctaLabel: "Explore Summer",
+    ctaHref: "/collections/summer-lawn",
   },
   {
     id: 3,
     title: "Winter Khaddar Specials",
     subtitle: "Warm • Durable • Timeless",
     image: "linear-gradient(135deg, #10b981 0%, #047857 100%)",
-    cta: { label: "Shop Winter", href: "/collections/winter-khaddar" },
+    ctaLabel: "Shop Winter",
+    ctaHref: "/collections/winter-khaddar",
   },
 ];
 
 export function HeroCarousel() {
   const [current, setCurrent] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
+  const [slides, setSlides] = useState<HeroSlide[]>([]);
 
   useEffect(() => {
-    if (!autoplay) return;
+    const fetchSlides = async () => {
+      try {
+        const res = await fetch("/api/hero-slides", { cache: "no-store" });
+        if (res.ok) {
+          const data = await res.json();
+          setSlides(data);
+        }
+      } catch (error) {
+        console.error("[HeroCarousel] Failed to load hero slides", error);
+      }
+    };
+
+    fetchSlides();
+  }, []);
+
+  useEffect(() => {
+    setCurrent(0);
+  }, [slides.length]);
+
+  const displaySlides = useMemo(() => {
+    return slides.length ? slides : FALLBACK_SLIDES;
+  }, [slides]);
+
+  useEffect(() => {
+    if (!autoplay || displaySlides.length === 0) return;
 
     const timer = setInterval(() => {
-      setCurrent((prev) => (prev + 1) % heroSlides.length);
+      setCurrent((prev) => (prev + 1) % displaySlides.length);
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [autoplay]);
+  }, [autoplay, displaySlides.length]);
 
   const prev = () => {
-    setCurrent((prev) => (prev - 1 + heroSlides.length) % heroSlides.length);
+    setCurrent((prev) => (prev - 1 + displaySlides.length) % displaySlides.length);
     setAutoplay(false);
   };
 
   const next = () => {
-    setCurrent((prev) => (prev + 1) % heroSlides.length);
+    setCurrent((prev) => (prev + 1) % displaySlides.length);
     setAutoplay(false);
   };
 
@@ -68,24 +95,38 @@ export function HeroCarousel() {
     setAutoplay(false);
   };
 
-  const slide = heroSlides[current];
+  const slide = displaySlides[current] || FALLBACK_SLIDES[0];
+  const keyForSlide = (s: HeroSlide, index: number) => s._id || s.id || index;
 
   return (
     <section className="relative h-[500px] overflow-hidden md:h-[600px]">
       {/* Slides */}
       <div className="relative h-full">
-        {heroSlides.map((s, index) => (
-          <div
-            key={s.id}
-            className={`absolute inset-0 transition-opacity duration-700 ${
-              index === current ? "opacity-100" : "opacity-0"
-            }`}
-            style={{ background: s.image }}
-          >
-            {/* Overlay */}
-            <div className="absolute inset-0 bg-black/20" />
-          </div>
-        ))}
+        {displaySlides.map((s, index) => {
+          const isImage =
+            s.image.startsWith("http") ||
+            s.image.startsWith("/") ||
+            s.image.startsWith("data:");
+          const backgroundStyles = isImage
+            ? {
+                backgroundImage: `url(${s.image})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+              }
+            : { background: s.image };
+          return (
+            <div
+              key={keyForSlide(s, index)}
+              className={`absolute inset-0 transition-opacity duration-700 ${
+                index === current ? "opacity-100" : "opacity-0"
+              }`}
+              style={backgroundStyles}
+            >
+              {/* Overlay */}
+              <div className="absolute inset-0 bg-black/20" />
+            </div>
+          );
+        })}
 
         {/* Content */}
         <div className="relative h-full flex items-center justify-center">
@@ -102,10 +143,10 @@ export function HeroCarousel() {
             {/* CTA Button */}
             <div className="pt-4">
               <a
-                href={slide.cta.href}
+                href={slide.ctaHref}
                 className="inline-block rounded-full bg-red-600 px-8 py-3 text-sm font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-red-700 hover:shadow-lg hover:shadow-red-600/50"
               >
-                {slide.cta.label}
+                {slide.ctaLabel}
               </a>
             </div>
           </div>
@@ -125,9 +166,9 @@ export function HeroCarousel() {
 
         {/* Dots */}
         <div className="flex gap-2">
-          {heroSlides.map((_, index) => (
+          {displaySlides.map((_, index) => (
             <button
-              key={index}
+              key={keyForSlide(_, index)}
               onClick={() => goToSlide(index)}
               className={`h-2 rounded-full transition ${
                 index === current

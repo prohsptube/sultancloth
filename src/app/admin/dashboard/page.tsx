@@ -22,16 +22,31 @@ interface Category {
   parentId?: string | null;
 }
 
+interface HeroSlide {
+  _id: string;
+  title: string;
+  subtitle: string;
+  image: string;
+  ctaLabel: string;
+  ctaHref: string;
+  order?: number;
+  isActive?: boolean;
+}
+
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<"products" | "categories">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "categories" | "hero">("products");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
   const [loading, setLoading] = useState(true);
+  const [heroLoading, setHeroLoading] = useState(false);
   const [error, setError] = useState("");
   const [showProductForm, setShowProductForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [showHeroForm, setShowHeroForm] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingHeroId, setEditingHeroId] = useState<string | null>(null);
   const [productFormData, setProductFormData] = useState({
     name: "",
     category: "men",
@@ -49,11 +64,21 @@ export default function AdminDashboard() {
   });
   const [selectedMainCategory, setSelectedMainCategory] = useState("");
   const [selectedSubCategory, setSelectedSubCategory] = useState("");
+  const [heroFormData, setHeroFormData] = useState({
+    title: "",
+    subtitle: "",
+    image: "",
+    ctaLabel: "",
+    ctaHref: "/collections",
+    order: 0,
+    isActive: true,
+  });
   const router = useRouter();
 
   useEffect(() => {
     fetchProducts();
     fetchCategories();
+    fetchHeroSlides();
   }, []);
 
   const fetchProducts = async () => {
@@ -79,6 +104,20 @@ export default function AdminDashboard() {
       setCategories(data);
     } catch (err) {
       console.error("Error loading categories:", err);
+    }
+  };
+
+  const fetchHeroSlides = async () => {
+    try {
+      setHeroLoading(true);
+      const res = await fetch("/api/hero-slides");
+      if (!res.ok) throw new Error("Failed to fetch hero slides");
+      const data = await res.json();
+      setHeroSlides(data);
+    } catch (err) {
+      console.error("Error loading hero slides:", err);
+    } finally {
+      setHeroLoading(false);
     }
   };
 
@@ -183,6 +222,104 @@ export default function AdminDashboard() {
     setShowProductForm(false);
     setEditingProductId(null);
     setProductFormData({ name: "", category: "men", price: "", description: "" });
+  };
+
+  // HERO SLIDE HANDLERS
+  const handleAddHeroSlide = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!heroFormData.title || !heroFormData.image || !heroFormData.ctaLabel || !heroFormData.ctaHref) {
+      setError("Title, image, CTA label, and CTA link are required");
+      return;
+    }
+
+    try {
+      const method = editingHeroId ? "PUT" : "POST";
+      const url = editingHeroId
+        ? `/api/hero-slides/${editingHeroId}`
+        : "/api/hero-slides";
+
+      const payload = {
+        ...heroFormData,
+        order: Number(heroFormData.order) || 0,
+        isActive: heroFormData.isActive,
+      };
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        setHeroFormData({
+          title: "",
+          subtitle: "",
+          image: "",
+          ctaLabel: "",
+          ctaHref: "/collections",
+          order: 0,
+          isActive: true,
+        });
+        setEditingHeroId(null);
+        setShowHeroForm(false);
+        await fetchHeroSlides();
+      } else {
+        const data = await response.json();
+        setError(data.error || "Error saving hero slide");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error saving hero slide");
+    }
+  };
+
+  const handleEditHeroSlide = (slide: HeroSlide) => {
+    setEditingHeroId(slide._id);
+    setHeroFormData({
+      title: slide.title,
+      subtitle: slide.subtitle || "",
+      image: slide.image,
+      ctaLabel: slide.ctaLabel,
+      ctaHref: slide.ctaHref,
+      order: slide.order ?? 0,
+      isActive: slide.isActive !== false,
+    });
+    setShowHeroForm(true);
+  };
+
+  const handleDeleteHeroSlide = async (id: string) => {
+    if (!confirm("Delete this hero slide?")) return;
+
+    try {
+      const response = await fetch(`/api/hero-slides/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        setHeroSlides(heroSlides.filter((s) => s._id !== id));
+      } else {
+        setError("Error deleting hero slide");
+      }
+    } catch (err) {
+      setError("Error deleting hero slide");
+    }
+  };
+
+  const handleCancelHeroForm = () => {
+    setShowHeroForm(false);
+    setEditingHeroId(null);
+    setHeroFormData({
+      title: "",
+      subtitle: "",
+      image: "",
+      ctaLabel: "",
+      ctaHref: "/collections",
+      order: 0,
+      isActive: true,
+    });
   };
 
   // CATEGORY HANDLERS
@@ -321,6 +458,16 @@ export default function AdminDashboard() {
             }`}
           >
             Products
+          </button>
+          <button
+            onClick={() => setActiveTab("hero")}
+            className={`px-4 py-2 font-medium transition ${
+              activeTab === "hero"
+                ? "text-red-600 border-b-2 border-red-600"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Hero Slides
           </button>
           <button
             onClick={() => setActiveTab("categories")}
@@ -520,6 +667,187 @@ export default function AdminDashboard() {
                           </button>
                           <button
                             onClick={() => handleDeleteProduct(product._id)}
+                            className="text-red-600 hover:text-red-800 transition"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* HERO TAB */}
+        {activeTab === "hero" && (
+          <div>
+            {showHeroForm && (
+              <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 className="text-xl font-bold text-gray-800 mb-4">
+                  {editingHeroId ? "Edit Hero Slide" : "Add Hero Slide"}
+                </h2>
+                <form onSubmit={handleAddHeroSlide} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                      <input
+                        type="text"
+                        value={heroFormData.title}
+                        onChange={(e) => setHeroFormData({ ...heroFormData, title: e.target.value })}
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+                      <input
+                        type="text"
+                        value={heroFormData.subtitle}
+                        onChange={(e) => setHeroFormData({ ...heroFormData, subtitle: e.target.value })}
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                        placeholder="Crafted in Pakistan • Shipped Worldwide"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Background (image URL or gradient)
+                      </label>
+                      <input
+                        type="text"
+                        value={heroFormData.image}
+                        onChange={(e) => setHeroFormData({ ...heroFormData, image: e.target.value })}
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                        placeholder="https://... or linear-gradient(...)"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">CTA Label</label>
+                      <input
+                        type="text"
+                        value={heroFormData.ctaLabel}
+                        onChange={(e) => setHeroFormData({ ...heroFormData, ctaLabel: e.target.value })}
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">CTA Link</label>
+                      <input
+                        type="text"
+                        value={heroFormData.ctaHref}
+                        onChange={(e) => setHeroFormData({ ...heroFormData, ctaHref: e.target.value })}
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                        placeholder="/collections"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Order</label>
+                      <input
+                        type="number"
+                        value={heroFormData.order}
+                        onChange={(e) =>
+                          setHeroFormData({ ...heroFormData, order: Number(e.target.value) || 0 })
+                        }
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                        min={0}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={heroFormData.isActive}
+                      onChange={(e) => setHeroFormData({ ...heroFormData, isActive: e.target.checked })}
+                    />
+                    <span className="text-sm text-gray-700">Active (show on site)</span>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="submit"
+                      className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+                    >
+                      {editingHeroId ? "Update" : "Create"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelHeroForm}
+                      className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {!showHeroForm && (
+              <button
+                onClick={() => setShowHeroForm(true)}
+                className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition mb-6"
+              >
+                <Plus size={20} />
+                Add Hero Slide
+              </button>
+            )}
+
+            {heroLoading ? (
+              <div className="text-center py-12">
+                <p className="text-gray-600">Loading hero slides...</p>
+              </div>
+            ) : heroSlides.length === 0 ? (
+              <div className="bg-white rounded-lg p-8 text-center">
+                <p className="text-gray-600">No hero slides yet. Add one to get started!</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-100 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Title</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">CTA</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Order</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Active</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {heroSlides.map((slide) => (
+                      <tr key={slide._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 text-sm text-gray-800">
+                          <div className="font-semibold">{slide.title}</div>
+                          {slide.subtitle && (
+                            <div className="text-xs text-gray-500">{slide.subtitle}</div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          <div>{slide.ctaLabel}</div>
+                          <div className="text-xs text-gray-500">{slide.ctaHref}</div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{slide.order ?? 0}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {slide.isActive === false ? "No" : "Yes"}
+                        </td>
+                        <td className="px-6 py-4 text-sm flex gap-2">
+                          <button
+                            onClick={() => handleEditHeroSlide(slide)}
+                            className="text-blue-600 hover:text-blue-800 transition"
+                          >
+                            <Edit size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteHeroSlide(slide._id)}
                             className="text-red-600 hover:text-red-800 transition"
                           >
                             <Trash2 size={18} />
