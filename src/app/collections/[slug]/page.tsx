@@ -3,7 +3,7 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ProductGrid } from "@/components/product/ProductGrid";
+import { SimpleProductGrid } from "@/components/product/SimpleProductGrid";
 import { Container } from "@/components/layout/Container";
 
 interface Product {
@@ -112,7 +112,7 @@ export default function CollectionPage() {
 
       {/* Products Grid */}
       {products.length > 0 ? (
-        <ProductGrid products={products} />
+        <SimpleProductGrid products={products} />
       ) : (
         <div className="py-12 text-center">
           <p className="text-gray-600">
