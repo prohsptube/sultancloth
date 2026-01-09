@@ -38,6 +38,9 @@ export default function AdminDashboard() {
     price: "",
     description: "",
   });
+  const [selectedLevel1, setSelectedLevel1] = useState("");
+  const [selectedLevel2, setSelectedLevel2] = useState("");
+  const [selectedLevel3, setSelectedLevel3] = useState("");
   const [categoryFormData, setCategoryFormData] = useState({
     name: "",
     slug: "",
@@ -88,7 +91,12 @@ export default function AdminDashboard() {
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const categoryToUse = selectedSubCategory || selectedMainCategory;
+    // Use deepest selected category slug
+    const level3 = categories.find((c) => c._id === selectedLevel3);
+    const level2 = categories.find((c) => c._id === selectedLevel2);
+    const level1 = categories.find((c) => c._id === selectedLevel1);
+    const categoryToUse = level3?.slug || level2?.slug || level1?.slug;
+
     if (!productFormData.name || !productFormData.price || !categoryToUse) {
       setError("Name, price, and category are required");
       return;
@@ -119,6 +127,9 @@ export default function AdminDashboard() {
         setShowProductForm(false);
         setSelectedMainCategory("");
         setSelectedSubCategory("");
+        setSelectedLevel1("");
+        setSelectedLevel2("");
+        setSelectedLevel3("");
         await fetchProducts();
       } else {
         const data = await response.json();
@@ -137,6 +148,15 @@ export default function AdminDashboard() {
       price: product.price.toString(),
       description: product.description || "",
     });
+    // Preselect category hierarchy based on slug
+    const cat = categories.find((c) => c.slug === product.category);
+    if (cat) {
+      const parent = categories.find((c) => c._id === cat.parentId);
+      const grand = parent ? categories.find((c) => c._id === parent.parentId) : null;
+      setSelectedLevel3(cat._id);
+      setSelectedLevel2(parent?._id || "");
+      setSelectedLevel1(grand?._id || parent?._id || "");
+    }
     setShowProductForm(true);
   };
 
@@ -252,6 +272,21 @@ export default function AdminDashboard() {
     ? categories.filter((cat) => cat.parentId === selectedMainCategory)
     : [];
 
+  // Level2 and Level3 helpers for product form
+  const level2Cats = selectedLevel1
+    ? categories.filter((cat) => cat.parentId === selectedLevel1)
+    : [];
+  const level3Cats = selectedLevel2
+    ? categories.filter((cat) => cat.parentId === selectedLevel2)
+    : [];
+
+  const getCategoryLabel = (cat: Category): string => {
+    const parent = categories.find((c) => c._id === cat.parentId);
+    const grandParent = parent ? categories.find((c) => c._id === parent.parentId) : null;
+    const parts = [grandParent?.name, parent?.name, cat.name].filter(Boolean);
+    return parts.join(" / ");
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -326,13 +361,14 @@ export default function AdminDashboard() {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Category
+                        Category (Level 1)
                       </label>
                       <select
-                        value={selectedMainCategory}
+                        value={selectedLevel1}
                         onChange={(e) => {
-                          setSelectedMainCategory(e.target.value);
-                          setSelectedSubCategory("");
+                          setSelectedLevel1(e.target.value);
+                          setSelectedLevel2("");
+                          setSelectedLevel3("");
                         }}
                         className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
                       >
@@ -345,19 +381,42 @@ export default function AdminDashboard() {
                       </select>
                     </div>
 
-                    {selectedMainCategory && subCategories.length > 0 && (
+                    {selectedLevel1 && (
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Sub Category
+                          Category (Level 2)
                         </label>
                         <select
-                          value={selectedSubCategory}
-                          onChange={(e) => setSelectedSubCategory(e.target.value)}
+                          value={selectedLevel2}
+                          onChange={(e) => {
+                            setSelectedLevel2(e.target.value);
+                            setSelectedLevel3("");
+                          }}
                           className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
                         >
                           <option value="">Select Sub Category</option>
-                          {subCategories.map((cat) => (
-                            <option key={cat._id} value={cat.slug}>
+                          {level2Cats.map((cat) => (
+                            <option key={cat._id} value={cat._id}>
+                              {cat.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+
+                    {selectedLevel2 && (
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                          Category (Level 3)
+                        </label>
+                        <select
+                          value={selectedLevel3}
+                          onChange={(e) => setSelectedLevel3(e.target.value)}
+                          className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                        >
+                          <option value="">Select Sub Sub Category</option>
+                          {level3Cats.map((cat) => (
+                            <option key={cat._id} value={cat._id}>
                               {cat.name}
                             </option>
                           ))}
@@ -510,7 +569,7 @@ export default function AdminDashboard() {
                           onChange={() =>
                             setCategoryFormData({
                               ...categoryFormData,
-                              parentId: mainCategories[0]?._id || "",
+                              parentId: "",
                             })
                           }
                         />
@@ -533,9 +592,9 @@ export default function AdminDashboard() {
                         required
                       >
                         <option value="">Select Parent Category</option>
-                        {mainCategories.map((cat) => (
+                        {categories.map((cat) => (
                           <option key={cat._id} value={cat._id}>
-                            {cat.name}
+                            {getCategoryLabel(cat)}
                           </option>
                         ))}
                       </select>
