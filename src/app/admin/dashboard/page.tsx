@@ -188,9 +188,11 @@ export default function AdminDashboard() {
       });
 
       if (response.ok) {
-        setCategoryFormData({ name: "", slug: "", description: "" });
+        setCategoryFormData({ name: "", slug: "", description: "", parentId: null });
         setEditingCategoryId(null);
         setShowCategoryForm(false);
+        setSelectedMainCategory("");
+        setSelectedSubCategory("");
         await fetchCategories();
       } else {
         const data = await response.json();
