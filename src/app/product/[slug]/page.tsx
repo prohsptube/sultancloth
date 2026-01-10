@@ -48,6 +48,9 @@ export default function ProductDetail({ params }: { params: Promise<{ slug: stri
   const [isFavorite, setIsFavorite] = useState(false);
   const [visitorId, setVisitorId] = useState("");
 
+  // Image zoom state
+  const [isImageHovered, setIsImageHovered] = useState(false);
+
   // Review form
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewForm, setReviewForm] = useState({
@@ -245,11 +248,16 @@ export default function ProductDetail({ params }: { params: Promise<{ slug: stri
       <Container>
         <div className="py-8 grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* Product Image */}
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center overflow-hidden rounded-lg">
             {product.image ? (
               <div
-                className="w-full h-96 rounded-lg bg-cover bg-center border-2 border-red-200"
-                style={{ backgroundImage: `url(${product.image})` }}
+                className="w-full h-96 rounded-lg bg-cover bg-center border-2 border-red-200 cursor-zoom-in transition-transform duration-300"
+                style={{
+                  backgroundImage: `url(${product.image})`,
+                  transform: isImageHovered ? "scale(1.2)" : "scale(1)",
+                }}
+                onMouseEnter={() => setIsImageHovered(true)}
+                onMouseLeave={() => setIsImageHovered(false)}
               />
             ) : (
               <div className="w-full h-96 rounded-lg bg-gradient-to-br from-red-100 to-red-50 flex items-center justify-center border-2 border-red-200">
