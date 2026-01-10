@@ -129,7 +129,7 @@ export function HeroCarousel() {
         })}
 
         {/* Content */}
-        <div className="relative h-full flex items-center justify-center">
+        <div className="relative h-full flex items-end justify-center pb-24 md:pb-32">
           <div className="text-center space-y-6 px-4">
             <div className="space-y-2 animate-fade-in">
               <p className="text-white text-sm font-semibold uppercase tracking-[0.24em] drop-shadow-lg">
