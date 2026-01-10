@@ -14,11 +14,12 @@ export async function GET(request: NextRequest) {
     }
 
     const products = await getProductsCollection();
-    
-    // Search by slug first (if product uses slug), then by name
+
+    // Search by slug, category slug, or name (case-insensitive)
     const product = await products.findOne({
       $or: [
         { slug: name },
+        { category: name },
         { name: { $regex: name, $options: "i" } },
       ],
     });

@@ -18,6 +18,13 @@ export function ProductCard({ product }: ProductCardProps) {
   const priceLabel = formatPrice(product.pricePKR);
   const salePriceLabel = product.salePricePKR ? formatPrice(product.salePricePKR) : null;
   const hasDiscount = product.discount && product.discount > 0;
+  const fallbackSlug = product.name
+    ? product.name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+    : "";
+  const productHref = product.slug || fallbackSlug ? `/product/${product.slug || fallbackSlug}` : "#";
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border-2 border-red-200 bg-white shadow-lg transition hover:-translate-y-1 hover:border-red-600 hover:shadow-xl">
@@ -84,7 +91,7 @@ export function ProductCard({ product }: ProductCardProps) {
         {/* Only View Details */}
         <div className="mt-4 flex">
           <Link
-            href={product.slug ? `/product/${product.slug}` : "#"}
+            href={productHref}
             className="flex flex-1 items-center justify-center rounded-full border-2 border-red-600 bg-white px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-red-600 transition hover:bg-red-600 hover:text-white"
           >
             View Details
