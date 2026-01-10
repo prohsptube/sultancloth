@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import { join } from "path";
+import { v2 as cloudinary } from "cloudinary";
 import { checkAdminAuth } from "@/lib/auth";
-import sharp from "sharp";
 
-const UPLOAD_DIR = join(process.cwd(), "public/uploads/hero");
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
@@ -40,52 +44,45 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create upload directory if it doesn't exist
-    try {
-      await mkdir(UPLOAD_DIR, { recursive: true });
-    } catch (err) {
-      // Directory might already exist, ignore error
-    }
-
-    // Generate unique filename
-    const timestamp = Date.now();
-    const originalName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const filename = `${timestamp}-${originalName}`;
-    const outputFilename = filename.replace(/\.(jpg|jpeg|png)$/i, ".webp");
-
-    // Read file buffer
+    // Convert file to buffer
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Optimize image with sharp
-    // Resize to max 1920x800, maintain aspect ratio
-    // Convert to WebP for better compression
-    const optimizedBuffer = await sharp(buffer)
-      .resize(1920, 800, {
-        fit: "inside",
-        withoutEnlargement: true,
-      })
-      .webp({
-        quality: 85,
-        effort: 6,
-      })
-      .toBuffer();
+    // Upload to Cloudinary
+    const result = await new Promise((resolve, reject) => {
+      const stream = cloudinary.uploader.upload_stream(
+        {
+          folder: "sultancloth/hero",
+          resource_type: "auto",
+          format: "webp",
+          quality: "auto",
+          transformation: [
+            {
+              width: 1920,
+              height: 800,
+              crop: "fill",
+              gravity: "auto",
+            },
+          ],
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
 
-    // Save optimized image
-    const filepath = join(UPLOAD_DIR, outputFilename);
-    await writeFile(filepath, optimizedBuffer);
+      stream.end(buffer);
+    });
 
-    // Return public URL
-    const publicUrl = `/uploads/hero/${outputFilename}`;
+    const uploadResult = result as any;
 
-    console.log("[Upload] Image uploaded and optimized:", publicUrl);
+    console.log("[Upload] Image uploaded to Cloudinary:", uploadResult.secure_url);
 
     return NextResponse.json(
       {
-        url: publicUrl,
-        filename: outputFilename,
-        size: optimizedBuffer.length,
-        originalSize: file.size,
+        url: uploadResult.secure_url,
+        filename: uploadResult.public_id,
+        size: uploadResult.bytes,
       },
       { status: 200 }
     );
