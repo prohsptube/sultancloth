@@ -14,6 +14,10 @@ interface Product {
   discount?: number;
   description?: string;
   image?: string;
+  sku?: string;
+  quantity?: number;
+  sizes?: string[]; // e.g., ["XS", "S", "M", "L", "XL", "XXL"]
+  sizeChart?: string; // URL to size chart image
 }
 
 interface Category {
@@ -57,6 +61,10 @@ export default function AdminDashboard() {
     discount: "",
     description: "",
     image: "",
+    sku: "",
+    quantity: "",
+    sizes: [] as string[],
+    sizeChart: "",
   });
   const [selectedLevel1, setSelectedLevel1] = useState("");
   const [selectedLevel2, setSelectedLevel2] = useState("");
@@ -173,7 +181,7 @@ export default function AdminDashboard() {
       });
 
       if (response.ok) {
-        setProductFormData({ name: "", category: "men", price: "", salePrice: "", discount: "", description: "", image: "" });
+        setProductFormData({ name: "", category: "men", price: "", salePrice: "", discount: "", description: "", image: "", sku: "", quantity: "", sizes: [], sizeChart: "" });
         setEditingProductId(null);
         setShowProductForm(false);
         setSelectedMainCategory("");
@@ -202,6 +210,10 @@ export default function AdminDashboard() {
       discount: product.discount?.toString() || "",
       description: product.description || "",
       image: product.image || "",
+      sku: product.sku || "",
+      quantity: product.quantity?.toString() || "",
+      sizes: product.sizes || [],
+      sizeChart: product.sizeChart || "",
     });
     setProductImagePreview(product.image || null);
     // Preselect category hierarchy based on slug
@@ -238,7 +250,7 @@ export default function AdminDashboard() {
   const handleCancelProductForm = () => {
     setShowProductForm(false);
     setEditingProductId(null);
-    setProductFormData({ name: "", category: "men", price: "", salePrice: "", discount: "", description: "", image: "" });
+    setProductFormData({ name: "", category: "men", price: "", salePrice: "", discount: "", description: "", image: "", sku: "", quantity: "", sizes: [], sizeChart: "" });
     setProductImagePreview(null);
   };
 
@@ -807,6 +819,75 @@ export default function AdminDashboard() {
                       rows={3}
                       className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
                     />
+                  </div>
+
+                  {/* Additional Fields */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        SKU (Stock Keeping Unit)
+                      </label>
+                      <input
+                        type="text"
+                        value={productFormData.sku}
+                        onChange={(e) =>
+                          setProductFormData({ ...productFormData, sku: e.target.value })
+                        }
+                        placeholder="e.g., PROD-001"
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Quantity in Stock
+                      </label>
+                      <input
+                        type="number"
+                        value={productFormData.quantity}
+                        onChange={(e) =>
+                          setProductFormData({ ...productFormData, quantity: e.target.value })
+                        }
+                        placeholder="e.g., 50"
+                        min="0"
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Available Sizes (comma-separated)
+                      </label>
+                      <input
+                        type="text"
+                        value={productFormData.sizes?.join(", ") || ""}
+                        onChange={(e) =>
+                          setProductFormData({
+                            ...productFormData,
+                            sizes: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                          })
+                        }
+                        placeholder="e.g., XS, S, M, L, XL"
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Size Chart Upload */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Size Chart Image URL (optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={productFormData.sizeChart}
+                      onChange={(e) =>
+                        setProductFormData({ ...productFormData, sizeChart: e.target.value })
+                      }
+                      placeholder="https://..."
+                      className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Paste link to size chart image</p>
                   </div>
 
                   <div className="flex gap-3">
