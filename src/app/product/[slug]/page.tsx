@@ -251,7 +251,7 @@ export default function ProductDetail({ params }: { params: Promise<{ slug: stri
           <div className="flex items-center justify-center overflow-hidden rounded-lg">
             {product.image ? (
               <div
-                className="w-full h-96 rounded-lg bg-cover bg-center border-2 border-red-200 cursor-zoom-in transition-transform duration-300"
+                className="w-full h-96 md:h-[420px] lg:h-[520px] rounded-lg bg-cover bg-center border-2 border-red-200 cursor-zoom-in transition-transform duration-300"
                 style={{
                   backgroundImage: `url(${product.image})`,
                   transform: isImageHovered ? "scale(1.2)" : "scale(1)",
