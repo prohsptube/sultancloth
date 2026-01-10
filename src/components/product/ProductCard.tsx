@@ -16,13 +16,22 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const priceLabel = formatPrice(product.pricePKR);
+  const salePriceLabel = product.salePricePKR ? formatPrice(product.salePricePKR) : null;
+  const hasDiscount = product.discount && product.discount > 0;
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-2xl border-2 border-red-200 bg-white shadow-lg transition hover:-translate-y-1 hover:border-red-600 hover:shadow-xl">
       {/* Image placeholder / top band */}
       <div className="relative h-32 w-full overflow-hidden bg-gradient-to-tr from-red-100 via-red-50 to-white">
-        {/* Fabric type label top-left */}
-        <div className="absolute left-4 top-3 rounded-full bg-red-600 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white">
+        {/* Discount badge */}
+        {hasDiscount && (
+          <div className="absolute left-4 top-3 rounded-full bg-green-600 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white shadow-lg z-10">
+            {product.discount}% OFF
+          </div>
+        )}
+
+        {/* Fabric type label */}
+        <div className={`absolute ${hasDiscount ? 'right-4' : 'left-4'} top-3 rounded-full bg-red-600 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-white`}>
           {product.type === "UNSTITCHED" ? "Unstitched Fabric" : "Stitched Outfit"}
         </div>
 
@@ -47,9 +56,22 @@ export function ProductCard({ product }: ProductCardProps) {
         )}
 
         {/* Price + season */}
-        <div className="mt-4 flex items-center justify-between text-[11px] text-gray-600">
-          <div className="font-semibold text-red-600">
-            {priceLabel}
+        <div className="mt-4 flex items-center justify-between text-[11px]">
+          <div className="flex flex-col gap-1">
+            {salePriceLabel ? (
+              <>
+                <div className="font-semibold text-red-600 text-sm">
+                  {salePriceLabel}
+                </div>
+                <div className="text-xs text-gray-500 line-through">
+                  {priceLabel}
+                </div>
+              </>
+            ) : (
+              <div className="font-semibold text-red-600">
+                {priceLabel}
+              </div>
+            )}
           </div>
 
           {product.season && (

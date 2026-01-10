@@ -14,6 +14,8 @@ export interface Product {
 
   // Numeric price in PKR
   pricePKR?: number;
+  salePricePKR?: number;
+  discount?: number;
 
   gallery?: string[];
   description: string;

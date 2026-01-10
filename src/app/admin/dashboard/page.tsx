@@ -10,6 +10,8 @@ interface Product {
   name: string;
   category: string;
   price: number;
+  salePrice?: number;
+  discount?: number;
   description?: string;
   image?: string;
 }
@@ -51,11 +53,16 @@ export default function AdminDashboard() {
     name: "",
     category: "men",
     price: "",
+    salePrice: "",
+    discount: "",
     description: "",
+    image: "",
   });
   const [selectedLevel1, setSelectedLevel1] = useState("");
   const [selectedLevel2, setSelectedLevel2] = useState("");
   const [selectedLevel3, setSelectedLevel3] = useState("");
+  const [uploadingProductImage, setUploadingProductImage] = useState(false);
+  const [productImagePreview, setProductImagePreview] = useState<string | null>(null);
   const [categoryFormData, setCategoryFormData] = useState({
     name: "",
     slug: "",
@@ -153,6 +160,9 @@ export default function AdminDashboard() {
         ...productFormData,
         category: categoryToUse,
         price: parseFloat(productFormData.price),
+        salePrice: productFormData.salePrice ? parseFloat(productFormData.salePrice) : undefined,
+        discount: productFormData.discount ? parseFloat(productFormData.discount) : undefined,
+        image: productFormData.image || undefined,
       };
 
       const response = await fetch(url, {
@@ -163,7 +173,7 @@ export default function AdminDashboard() {
       });
 
       if (response.ok) {
-        setProductFormData({ name: "", category: "men", price: "", description: "" });
+        setProductFormData({ name: "", category: "men", price: "", salePrice: "", discount: "", description: "", image: "" });
         setEditingProductId(null);
         setShowProductForm(false);
         setSelectedMainCategory("");
@@ -171,6 +181,7 @@ export default function AdminDashboard() {
         setSelectedLevel1("");
         setSelectedLevel2("");
         setSelectedLevel3("");
+        setProductImagePreview(null);
         await fetchProducts();
       } else {
         const data = await response.json();
@@ -187,8 +198,12 @@ export default function AdminDashboard() {
       name: product.name,
       category: product.category,
       price: product.price.toString(),
+      salePrice: product.salePrice?.toString() || "",
+      discount: product.discount?.toString() || "",
       description: product.description || "",
+      image: product.image || "",
     });
+    setProductImagePreview(product.image || null);
     // Preselect category hierarchy based on slug
     const cat = categories.find((c) => c.slug === product.category);
     if (cat) {
@@ -223,7 +238,51 @@ export default function AdminDashboard() {
   const handleCancelProductForm = () => {
     setShowProductForm(false);
     setEditingProductId(null);
-    setProductFormData({ name: "", category: "men", price: "", description: "" });
+    setProductFormData({ name: "", category: "men", price: "", salePrice: "", discount: "", description: "", image: "" });
+    setProductImagePreview(null);
+  };
+
+  // PRODUCT IMAGE UPLOAD
+  const handleProductImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image size must be less than 5MB");
+      return;
+    }
+
+    setUploadingProductImage(true);
+    setError("");
+
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await fetch("/api/upload/hero", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setProductFormData({ ...productFormData, image: data.url });
+        setProductImagePreview(data.url);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.error || "Failed to upload image");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to upload image");
+    } finally {
+      setUploadingProductImage(false);
+    }
   };
 
   // HERO SLIDE HANDLERS
@@ -633,6 +692,105 @@ export default function AdminDashboard() {
                         step="0.01"
                         className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
                         required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Sale Price (PKR) - Optional
+                      </label>
+                      <input
+                        type="number"
+                        value={productFormData.salePrice}
+                        onChange={(e) =>
+                          setProductFormData({ ...productFormData, salePrice: e.target.value })
+                        }
+                        step="0.01"
+                        placeholder="Leave empty if no sale"
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Discount (%) - Optional
+                      </label>
+                      <input
+                        type="number"
+                        value={productFormData.discount}
+                        onChange={(e) =>
+                          setProductFormData({ ...productFormData, discount: e.target.value })
+                        }
+                        step="1"
+                        min="0"
+                        max="100"
+                        placeholder="e.g., 20"
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Product Image Upload */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Product Image
+                    </label>
+                    
+                    {productImagePreview && (
+                      <div className="mb-3 relative rounded-lg overflow-hidden border-2 border-gray-200">
+                        <div
+                          className="h-48 bg-cover bg-center"
+                          style={{ backgroundImage: `url(${productImagePreview})` }}
+                        >
+                          <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                            <div className="text-white text-center">
+                              <p className="text-sm font-medium">Preview</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="mb-2">
+                      <label
+                        htmlFor="product-image-upload"
+                        className={`flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition ${
+                          uploadingProductImage
+                            ? "border-gray-300 bg-gray-50 cursor-not-allowed"
+                            : "border-red-300 bg-red-50 hover:border-red-500 hover:bg-red-100"
+                        }`}
+                      >
+                        <Plus size={20} className="text-red-600" />
+                        <span className="text-sm font-medium text-gray-700">
+                          {uploadingProductImage ? "Uploading..." : "Upload Product Image (Max 5MB)"}
+                        </span>
+                      </label>
+                      <input
+                        id="product-image-upload"
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp"
+                        onChange={handleProductImageUpload}
+                        disabled={uploadingProductImage}
+                        className="hidden"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        Recommended: Square images 800×800 pixels. Auto-optimized to WebP.
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs text-gray-600 mb-1">
+                        Or paste image URL:
+                      </label>
+                      <input
+                        type="text"
+                        value={productFormData.image}
+                        onChange={(e) => {
+                          setProductFormData({ ...productFormData, image: e.target.value });
+                          setProductImagePreview(e.target.value);
+                        }}
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                        placeholder="https://..."
                       />
                     </div>
                   </div>
