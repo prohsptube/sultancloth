@@ -26,10 +26,16 @@ export default function MenCollectionPage() {
         const res = await fetch("/api/products");
         if (!res.ok) throw new Error("Failed to fetch products");
         const allProducts: Product[] = await res.json();
-        // Filter for men's category
+        
+        // Log all unique categories to debug
+        const allCategories = [...new Set(allProducts.map(p => p.category))];
+        console.log("Available categories:", allCategories);
+        
+        // Filter for men's category (case-insensitive)
         const menProducts = allProducts.filter(
           (p) => p.category && p.category.toLowerCase() === "men"
         );
+        console.log("Men products found:", menProducts.length);
         setProducts(menProducts);
       } catch (err) {
         console.error(err);
