@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { v2 as cloudinary } from "cloudinary";
 import { checkAdminAuth } from "@/lib/auth";
 
-// Configure Cloudinary
+// Configure Cloudinary from URL
+if (!process.env.CLOUDINARY_URL) {
+  throw new Error("CLOUDINARY_URL environment variable is not set");
+}
+
 cloudinary.config({
-  cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
+  secure: true,
 });
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
