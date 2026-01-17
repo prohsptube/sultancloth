@@ -13,7 +13,7 @@ export function Header() {
           <div className="relative h-14 w-48 md:h-16 md:w-64">
             <Image
               src="/sultan-logo.png"
-              alt="Sultan Cloth"
+              alt="Sultan Tag"
               fill
               className="object-contain drop-shadow-[0_2px_6px_rgba(220,38,38,0.25)]"
               priority

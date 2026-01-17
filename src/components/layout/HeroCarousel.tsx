@@ -44,14 +44,11 @@ const FALLBACK_SLIDES: HeroSlide[] = [
 export function HeroCarousel({ initialSlides = [] }: { initialSlides?: HeroSlide[] }) {
   const [current, setCurrent] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
-  const [slides, setSlides] = useState<HeroSlide[]>(initialSlides);
+  const [slides, setSlides] = useState<HeroSlide[]>(() => initialSlides || []);
 
   // Only fetch if no initial slides provided
   useEffect(() => {
-    if (initialSlides.length > 0) {
-      setSlides(initialSlides);
-      return;
-    }
+    if (initialSlides.length > 0) return;
 
     const fetchSlides = async () => {
       try {
@@ -66,15 +63,13 @@ export function HeroCarousel({ initialSlides = [] }: { initialSlides?: HeroSlide
     };
 
     fetchSlides();
-  }, [initialSlides]);
-
-  useEffect(() => {
-    setCurrent(0);
-  }, [slides.length]);
+  }, [initialSlides.length]);
 
   const displaySlides = useMemo(() => {
     return slides.length ? slides : FALLBACK_SLIDES;
   }, [slides]);
+
+  const safeCurrent = displaySlides.length ? current % displaySlides.length : 0;
 
   useEffect(() => {
     if (!autoplay || displaySlides.length === 0) return;
@@ -87,11 +82,13 @@ export function HeroCarousel({ initialSlides = [] }: { initialSlides?: HeroSlide
   }, [autoplay, displaySlides.length]);
 
   const prev = () => {
+    if (!displaySlides.length) return;
     setCurrent((prev) => (prev - 1 + displaySlides.length) % displaySlides.length);
     setAutoplay(false);
   };
 
   const next = () => {
+    if (!displaySlides.length) return;
     setCurrent((prev) => (prev + 1) % displaySlides.length);
     setAutoplay(false);
   };
@@ -101,7 +98,7 @@ export function HeroCarousel({ initialSlides = [] }: { initialSlides?: HeroSlide
     setAutoplay(false);
   };
 
-  const slide = displaySlides[current] || FALLBACK_SLIDES[0];
+  const slide = displaySlides[safeCurrent] || FALLBACK_SLIDES[0];
   const keyForSlide = (s: HeroSlide, index: number) => s._id || s.id || index;
 
   return (
@@ -124,7 +121,7 @@ export function HeroCarousel({ initialSlides = [] }: { initialSlides?: HeroSlide
             <div
               key={keyForSlide(s, index)}
               className={`absolute inset-0 transition-opacity duration-700 ${
-                index === current ? "opacity-100" : "opacity-0"
+                index === safeCurrent ? "opacity-100" : "opacity-0"
               }`}
               style={backgroundStyles}
             >
@@ -177,7 +174,7 @@ export function HeroCarousel({ initialSlides = [] }: { initialSlides?: HeroSlide
               key={keyForSlide(_, index)}
               onClick={() => goToSlide(index)}
               className={`h-2 rounded-full transition ${
-                index === current
+                index === safeCurrent
                   ? "w-6 bg-white"
                   : "w-2 bg-white/50 hover:bg-white/75"
               }`}

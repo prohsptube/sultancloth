@@ -39,20 +39,45 @@ interface HeroSlide {
   isActive?: boolean;
 }
 
+interface NavSubItem {
+  label: string;
+  href: string;
+}
+
+interface NavCategory {
+  label: string;
+  href: string;
+  subItems?: NavSubItem[];
+}
+
+interface NavigationItem {
+  _id: string;
+  label: string;
+  href: string;
+  order: number;
+  categories?: NavCategory[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<"products" | "categories" | "hero">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "categories" | "hero" | "navigation">("products");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
+  const [navigationItems, setNavigationItems] = useState<NavigationItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [heroLoading, setHeroLoading] = useState(false);
+  const [navLoading, setNavLoading] = useState(false);
   const [error, setError] = useState("");
   const [showProductForm, setShowProductForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [showHeroForm, setShowHeroForm] = useState(false);
+  const [showNavForm, setShowNavForm] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editingHeroId, setEditingHeroId] = useState<string | null>(null);
+  const [editingNavId, setEditingNavId] = useState<string | null>(null);
   const [productFormData, setProductFormData] = useState({
     name: "",
     category: "men",
@@ -90,12 +115,18 @@ export default function AdminDashboard() {
   });
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [navFormData, setNavFormData] = useState({
+    label: "",
+    href: "",
+    categories: [] as NavCategory[],
+  });
   const router = useRouter();
 
   useEffect(() => {
     fetchProducts();
     fetchCategories();
     fetchHeroSlides();
+    fetchNavigation();
   }, []);
 
   const fetchProducts = async () => {
@@ -136,6 +167,90 @@ export default function AdminDashboard() {
     } finally {
       setHeroLoading(false);
     }
+  };
+
+  const fetchNavigation = async () => {
+    try {
+      setNavLoading(true);
+      const res = await fetch("/api/navigation");
+      if (!res.ok) throw new Error("Failed to fetch navigation");
+      const data = await res.json();
+      setNavigationItems(data);
+    } catch (err) {
+      console.error("Error loading navigation:", err);
+    } finally {
+      setNavLoading(false);
+    }
+  };
+
+  const handleAddNavigation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    if (!navFormData.label || !navFormData.href) {
+      setError("Label and href are required");
+      return;
+    }
+
+    try {
+      const method = editingNavId ? "PUT" : "POST";
+      const url = editingNavId
+        ? `/api/navigation/${editingNavId}`
+        : "/api/navigation";
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(navFormData),
+      });
+
+      if (response.ok) {
+        setNavFormData({ label: "", href: "", categories: [] });
+        setEditingNavId(null);
+        setShowNavForm(false);
+        await fetchNavigation();
+      } else {
+        const data = await response.json();
+        setError(data.error || "Error saving navigation");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error saving navigation");
+    }
+  };
+
+  const handleEditNavigation = (item: NavigationItem) => {
+    setEditingNavId(item._id);
+    setNavFormData({
+      label: item.label,
+      href: item.href,
+      categories: item.categories || [],
+    });
+    setShowNavForm(true);
+  };
+
+  const handleDeleteNavigation = async (id: string) => {
+    if (!confirm("Delete this navigation item?")) return;
+
+    try {
+      const response = await fetch(`/api/navigation/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        setNavigationItems(navigationItems.filter((n) => n._id !== id));
+      } else {
+        setError("Error deleting navigation item");
+      }
+    } catch (err) {
+      setError("Error deleting navigation item");
+    }
+  };
+
+  const handleCancelNavForm = () => {
+    setShowNavForm(false);
+    setEditingNavId(null);
+    setNavFormData({ label: "", href: "", categories: [] });
   };
 
   const handleLogout = async () => {
@@ -598,6 +713,16 @@ export default function AdminDashboard() {
             }`}
           >
             Categories
+          </button>
+          <button
+            onClick={() => setActiveTab("navigation")}
+            className={`px-4 py-2 font-medium transition ${
+              activeTab === "navigation"
+                ? "text-red-600 border-b-2 border-red-600"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Navigation Menu
           </button>
         </div>
 
@@ -1404,6 +1529,125 @@ export default function AdminDashboard() {
                         </tr>
                       );
                     })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* NAVIGATION TAB */}
+        {activeTab === "navigation" && (
+          <div>
+            {showNavForm && (
+              <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 className="text-xl font-bold text-gray-800 mb-4">
+                  {editingNavId ? "Edit Navigation Item" : "Add Navigation Item"}
+                </h2>
+                <form onSubmit={handleAddNavigation} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Label *
+                    </label>
+                    <input
+                      type="text"
+                      value={navFormData.label}
+                      onChange={(e) =>
+                        setNavFormData({ ...navFormData, label: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600"
+                      placeholder="e.g., Men, Women, Collections"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      URL/Href *
+                    </label>
+                    <input
+                      type="text"
+                      value={navFormData.href}
+                      onChange={(e) =>
+                        setNavFormData({ ...navFormData, href: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600"
+                      placeholder="e.g., /collections/men"
+                    />
+                  </div>
+
+                  <div className="flex gap-2 pt-4">
+                    <button
+                      type="submit"
+                      className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition"
+                    >
+                      {editingNavId ? "Update" : "Add"} Item
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelNavForm}
+                      className="bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-medium hover:bg-gray-300 transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+                </form>
+              </div>
+            )}
+
+            {!showNavForm && (
+              <button
+                onClick={() => setShowNavForm(true)}
+                className="mb-6 bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition flex items-center gap-2"
+              >
+                <Plus size={20} />
+                Add Navigation Item
+              </button>
+            )}
+
+            {navLoading ? (
+              <div className="text-center py-8">
+                <p className="text-gray-600">Loading navigation items...</p>
+              </div>
+            ) : navigationItems.length === 0 ? (
+              <div className="bg-white rounded-lg p-8 text-center">
+                <p className="text-gray-600">No navigation items. Add one to get started!</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-100 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Label</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">URL</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Order</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {navigationItems.map((item) => (
+                      <tr key={item._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 text-sm font-medium text-gray-800">
+                          {item.label}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{item.href}</td>
+                        <td className="px-6 py-4 text-sm text-gray-600">{item.order || 0}</td>
+                        <td className="px-6 py-4 text-sm flex gap-2">
+                          <button
+                            onClick={() => handleEditNavigation(item)}
+                            className="text-blue-600 hover:text-blue-800 transition"
+                          >
+                            <Edit size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteNavigation(item._id)}
+                            className="text-red-600 hover:text-red-800 transition"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

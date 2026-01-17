@@ -3,13 +3,43 @@ import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { mainNavigation } from "@/lib/navigation";
 
-export function MegaMenu() {
+interface NavSubItem {
+  label: string;
+  href: string;
+}
+
+interface NavCategory {
+  label: string;
+  href: string;
+  subItems?: NavSubItem[];
+}
+
+interface NavMenu {
+  label: string;
+  href: string;
+  categories?: NavCategory[];
+}
+
+export async function MegaMenu() {
+  let navigation: NavMenu[] = mainNavigation;
+
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/api/navigation`, {
+      next: { revalidate: 3600 }, // Revalidate every hour
+    });
+    if (res.ok) {
+      navigation = await res.json();
+    }
+  } catch (error) {
+    console.error("[MegaMenu] Failed to fetch navigation from DB, using static:", error);
+  }
   return (
     <nav className="border-t border-red-200 bg-white/98 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         {/* Menu items - centered */}
         <div className="flex items-center justify-center flex-wrap">
-          {mainNavigation.map((item) => (
+          {navigation.map((item) => (
             <div key={item.label} className="group relative">
               {/* Main Menu Item */}
               <Link

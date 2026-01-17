@@ -12,6 +12,7 @@ interface Category {
 }
 
 export function DynamicMegaMenu() {
+  console.log("[DynamicMegaMenu] Component mounted!");
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -21,10 +22,13 @@ export function DynamicMegaMenu() {
         const res = await fetch("/api/categories");
         if (res.ok) {
           const data = await res.json();
+          console.log("[DynamicMegaMenu] Fetched categories:", data);
           setCategories(data);
+        } else {
+          console.error("[DynamicMegaMenu] Failed to fetch - status:", res.status);
         }
       } catch (error) {
-        console.error("Failed to fetch categories:", error);
+        console.error("[DynamicMegaMenu] Fetch error:", error);
       } finally {
         setLoading(false);
       }
@@ -35,6 +39,7 @@ export function DynamicMegaMenu() {
 
   // Get main categories (Level 1 - no parentId)
   const mainCategories = categories.filter((cat) => !cat.parentId);
+  console.log("[DynamicMegaMenu] Main categories:", mainCategories);
 
   // Get direct children of a category (Level 2)
   const getSubcategories = (parentId: string) => {
@@ -47,8 +52,11 @@ export function DynamicMegaMenu() {
   };
 
   if (loading) {
+    console.log("[DynamicMegaMenu] Still loading...");
     return <nav className="border-t border-red-200 bg-white/98 h-12" />;
   }
+
+  console.log("[DynamicMegaMenu] Rendering with categories:", categories);
 
   return (
     <nav className="border-t border-red-200 bg-white/98 backdrop-blur">

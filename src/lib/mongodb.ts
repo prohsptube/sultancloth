@@ -50,3 +50,8 @@ export async function getHeroSlidesCollection() {
   const { db } = await connectToDatabase();
   return db.collection("hero_slides");
 }
+
+export async function getNavigationCollection() {
+  const { db } = await connectToDatabase();
+  return db.collection("navigation");
+}
