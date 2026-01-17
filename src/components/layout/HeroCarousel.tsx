@@ -41,12 +41,18 @@ const FALLBACK_SLIDES: HeroSlide[] = [
   },
 ];
 
-export function HeroCarousel() {
+export function HeroCarousel({ initialSlides = [] }: { initialSlides?: HeroSlide[] }) {
   const [current, setCurrent] = useState(0);
   const [autoplay, setAutoplay] = useState(true);
-  const [slides, setSlides] = useState<HeroSlide[]>([]);
+  const [slides, setSlides] = useState<HeroSlide[]>(initialSlides);
 
+  // Only fetch if no initial slides provided
   useEffect(() => {
+    if (initialSlides.length > 0) {
+      setSlides(initialSlides);
+      return;
+    }
+
     const fetchSlides = async () => {
       try {
         const res = await fetch("/api/hero-slides", { cache: "no-store" });
@@ -60,7 +66,7 @@ export function HeroCarousel() {
     };
 
     fetchSlides();
-  }, []);
+  }, [initialSlides]);
 
   useEffect(() => {
     setCurrent(0);
