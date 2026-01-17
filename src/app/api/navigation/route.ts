@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getNavigationCollection } from "@/lib/mongodb";
 import { checkAdminAuth } from "@/lib/auth";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const navCollection = await getNavigationCollection();
     const allItems = await navCollection
@@ -10,15 +10,36 @@ export async function GET() {
       .sort({ order: 1 })
       .toArray();
 
+    const isRaw = request.nextUrl.searchParams.get("raw") === "1";
+    if (isRaw) {
+      // Return flat items with structural fields for admin UI
+      const flat = allItems.map((item: any) => ({
+        _id: item._id,
+        label: item.label,
+        href: item.href,
+        level: item.level,
+        order: item.order,
+        parentId: item.parentId ?? null,
+        isActive: item.isActive ?? true,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
+      }));
+      return NextResponse.json(flat);
+    }
+
     // Rebuild hierarchical structure: main menu > categories > sub-items
     const mainItems = allItems.filter((item: any) => item.level === 1);
-    
+
     const navigation = mainItems.map((mainItem: any) => {
       const categories = allItems
-        .filter((item: any) => item.level === 2 && String(item.parentId) === String(mainItem._id))
+        .filter(
+          (item: any) => item.level === 2 && String(item.parentId) === String(mainItem._id)
+        )
         .map((category: any) => {
           const subItems = allItems
-            .filter((item: any) => item.level === 3 && String(item.parentId) === String(category._id))
+            .filter(
+              (item: any) => item.level === 3 && String(item.parentId) === String(category._id)
+            )
             .map((subItem: any) => ({
               label: subItem.label,
               href: subItem.href,
@@ -93,15 +114,5 @@ export async function POST(request: NextRequest) {
     );
   }
 }
-      },
-      { status: 201 }
-    );
-  } catch (error) {
-    console.error("[API] POST /api/navigation error:", error);
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Failed to create navigation item" },
-      { status: 500 }
-    );
-  }
-}
+
 

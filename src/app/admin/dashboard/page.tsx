@@ -54,8 +54,10 @@ interface NavigationItem {
   _id: string;
   label: string;
   href: string;
+  level: number;
   order: number;
-  categories?: NavCategory[];
+  parentId?: string | null;
+  isActive?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -171,7 +173,7 @@ export default function AdminDashboard() {
   const fetchNavigation = async () => {
     try {
       setNavLoading(true);
-      const res = await fetch("/api/navigation");
+      const res = await fetch("/api/navigation?raw=1");
       if (!res.ok) throw new Error("Failed to fetch navigation");
       const data = await res.json();
       setNavigationItems(data);
