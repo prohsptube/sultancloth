@@ -20,7 +20,8 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
         $set: {
           label: body.label,
           href: body.href,
-          categories: body.categories || [],
+          // Keep level, parentId, and order unchanged for structural integrity
+          isActive: body.isActive !== undefined ? body.isActive : true,
           updatedAt: new Date(),
         },
       }

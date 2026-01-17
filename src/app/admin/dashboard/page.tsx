@@ -118,7 +118,6 @@ export default function AdminDashboard() {
   const [navFormData, setNavFormData] = useState({
     label: "",
     href: "",
-    categories: [] as NavCategory[],
   });
   const router = useRouter();
 
@@ -205,7 +204,7 @@ export default function AdminDashboard() {
       });
 
       if (response.ok) {
-        setNavFormData({ label: "", href: "", categories: [] });
+        setNavFormData({ label: "", href: "" });
         setEditingNavId(null);
         setShowNavForm(false);
         await fetchNavigation();
@@ -223,7 +222,6 @@ export default function AdminDashboard() {
     setNavFormData({
       label: item.label,
       href: item.href,
-      categories: item.categories || [],
     });
     setShowNavForm(true);
   };
@@ -250,7 +248,7 @@ export default function AdminDashboard() {
   const handleCancelNavForm = () => {
     setShowNavForm(false);
     setEditingNavId(null);
-    setNavFormData({ label: "", href: "", categories: [] });
+    setNavFormData({ label: "", href: "" });
   };
 
   const handleLogout = async () => {
