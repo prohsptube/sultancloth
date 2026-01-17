@@ -17,19 +17,26 @@ export default function AdminLoginPage() {
     setLoading(true);
 
     try {
+      console.log("Attempting login with:", { email });
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
 
+      console.log("Login response status:", response.status);
+
       if (response.ok) {
+        const data = await response.json();
+        console.log("Login successful, redirecting to dashboard");
         router.push("/admin/dashboard");
       } else {
         const data = await response.json();
+        console.error("Login failed:", data);
         setError(data.error || "Login failed");
       }
     } catch (err) {
+      console.error("Login error:", err);
       setError("Connection error. Try again.");
     } finally {
       setLoading(false);

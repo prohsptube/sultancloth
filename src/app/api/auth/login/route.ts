@@ -6,6 +6,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, password } = body;
 
+    console.log("[LOGIN] Attempt:", { email, hasPassword: !!password });
+    console.log("[LOGIN] Expected:", { 
+      email: process.env.ADMIN_EMAIL, 
+      hasEnvPassword: !!process.env.ADMIN_PASSWORD 
+    });
+
     // Simple authentication (in production, use bcrypt)
     if (
       email === process.env.ADMIN_EMAIL &&
@@ -13,6 +19,8 @@ export async function POST(request: NextRequest) {
     ) {
       // Create a simple token (in production, use JWT)
       const token = Buffer.from(`${email}:${Date.now()}`).toString("base64");
+
+      console.log("[LOGIN] Success! Setting cookie");
 
       const response = NextResponse.json(
         { success: true, token, email },
@@ -30,6 +38,7 @@ export async function POST(request: NextRequest) {
       return response;
     }
 
+    console.log("[LOGIN] Failed - invalid credentials");
     return NextResponse.json(
       { error: "Invalid credentials" },
       { status: 401 }

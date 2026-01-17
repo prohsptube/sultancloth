@@ -5,10 +5,38 @@ import { checkAdminAuth } from "@/lib/auth";
 export async function GET() {
   try {
     const navCollection = await getNavigationCollection();
-    const navigation = await navCollection
+    const allItems = await navCollection
       .find({})
       .sort({ order: 1 })
       .toArray();
+
+    // Rebuild hierarchical structure: main menu > categories > sub-items
+    const mainItems = allItems.filter((item: any) => item.level === 1);
+    
+    const navigation = mainItems.map((mainItem: any) => {
+      const categories = allItems
+        .filter((item: any) => item.level === 2 && String(item.parentId) === String(mainItem._id))
+        .map((category: any) => {
+          const subItems = allItems
+            .filter((item: any) => item.level === 3 && String(item.parentId) === String(category._id))
+            .map((subItem: any) => ({
+              label: subItem.label,
+              href: subItem.href,
+            }));
+
+          return {
+            label: category.label,
+            href: category.href,
+            subItems: subItems.length > 0 ? subItems : undefined,
+          };
+        });
+
+      return {
+        label: mainItem.label,
+        href: mainItem.href,
+        categories: categories.length > 0 ? categories : undefined,
+      };
+    });
 
     console.log("[API] GET /api/navigation - Found items:", navigation.length);
     return NextResponse.json(navigation);

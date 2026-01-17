@@ -1539,6 +1539,41 @@ export default function AdminDashboard() {
         {/* NAVIGATION TAB */}
         {activeTab === "navigation" && (
           <div>
+            <div className="mb-6 flex gap-2">
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch("/api/navigation/seed-main", {
+                      method: "POST",
+                      credentials: "include",
+                    });
+                    if (response.ok) {
+                      const data = await response.json();
+                      alert(data.message);
+                      await fetchNavigation();
+                    } else {
+                      alert("Failed to seed navigation");
+                    }
+                  } catch (err) {
+                    alert("Error seeding navigation");
+                  }
+                }}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition"
+              >
+                Seed Default Navigation
+              </button>
+              
+              {!showNavForm && (
+                <button
+                  onClick={() => setShowNavForm(true)}
+                  className="bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition flex items-center gap-2"
+                >
+                  <Plus size={20} />
+                  Add Navigation Item
+                </button>
+              )}
+            </div>
+
             {showNavForm && (
               <div className="bg-white rounded-lg shadow-md p-6 mb-8">
                 <h2 className="text-xl font-bold text-gray-800 mb-4">
@@ -1595,23 +1630,13 @@ export default function AdminDashboard() {
               </div>
             )}
 
-            {!showNavForm && (
-              <button
-                onClick={() => setShowNavForm(true)}
-                className="mb-6 bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition flex items-center gap-2"
-              >
-                <Plus size={20} />
-                Add Navigation Item
-              </button>
-            )}
-
             {navLoading ? (
               <div className="text-center py-8">
                 <p className="text-gray-600">Loading navigation items...</p>
               </div>
             ) : navigationItems.length === 0 ? (
               <div className="bg-white rounded-lg p-8 text-center">
-                <p className="text-gray-600">No navigation items. Add one to get started!</p>
+                <p className="text-gray-600">No navigation items. Click "Seed Default Navigation" to load the default menu structure!</p>
               </div>
             ) : (
               <div className="bg-white rounded-lg shadow-md overflow-hidden">
@@ -1621,7 +1646,7 @@ export default function AdminDashboard() {
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Label</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">URL</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Order</th>
-                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 w-20">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
@@ -1635,13 +1660,15 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4 text-sm flex gap-2">
                           <button
                             onClick={() => handleEditNavigation(item)}
-                            className="text-blue-600 hover:text-blue-800 transition"
+                            className="text-blue-600 hover:text-blue-800 transition p-1"
+                            title="Edit"
                           >
                             <Edit size={18} />
                           </button>
                           <button
                             onClick={() => handleDeleteNavigation(item._id)}
-                            className="text-red-600 hover:text-red-800 transition"
+                            className="text-red-600 hover:text-red-800 transition p-1"
+                            title="Delete"
                           >
                             <Trash2 size={18} />
                           </button>
