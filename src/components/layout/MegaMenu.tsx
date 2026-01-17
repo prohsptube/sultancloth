@@ -20,26 +20,74 @@ interface NavMenu {
   categories?: NavCategory[];
 }
 
+interface DBCategory {
+  _id: string;
+  name: string;
+  slug: string;
+  parentId?: string | null;
+}
+
 export async function MegaMenu() {
   let navigation: NavMenu[] = mainNavigation;
+  let dbCategories: DBCategory[] = [];
 
   try {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/navigation`, {
-      next: { revalidate: 3600 }, // Revalidate every hour
+    
+    // Fetch navigation items
+    const navRes = await fetch(`${baseUrl}/api/navigation`, {
+      next: { revalidate: 3600 },
     });
-    if (res.ok) {
-      navigation = await res.json();
+    if (navRes.ok) {
+      navigation = await navRes.json();
+    }
+
+    // Fetch admin-created categories
+    const catRes = await fetch(`${baseUrl}/api/categories`, {
+      next: { revalidate: 3600 },
+    });
+    if (catRes.ok) {
+      dbCategories = await catRes.json();
     }
   } catch (error) {
-    console.error("[MegaMenu] Failed to fetch navigation from DB, using static:", error);
+    console.error("[MegaMenu] Failed to fetch data from DB, using static:", error);
   }
+
+  // Helper: Link admin categories to navigation items
+  const enhancedNavigation = navigation.map((navItem) => {
+    if (!navItem.categories || navItem.categories.length === 0) {
+      // If no categories defined, try to find matching admin categories
+      const mainCats = dbCategories.filter((c) => !c.parentId);
+      const matching = mainCats.find(
+        (c) => c.name.toLowerCase() === navItem.label.toLowerCase() ||
+               c.slug === navItem.label.toLowerCase().replace(/\s+/g, '-')
+      );
+
+      if (matching) {
+        const subCats = dbCategories.filter((c) => c.parentId === matching._id);
+        return {
+          ...navItem,
+          categories: [
+            {
+              label: matching.name,
+              href: `/collections/${matching.slug}`,
+              subItems: subCats.map((sub) => ({
+                label: sub.name,
+                href: `/collections/${sub.slug}`,
+              })),
+            },
+          ],
+        };
+      }
+    }
+    return navItem;
+  });
   return (
     <nav className="border-t border-red-200 bg-white/98 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 md:px-6">
         {/* Menu items - centered */}
         <div className="flex items-center justify-center flex-wrap">
-          {navigation.map((item) => (
+          {enhancedNavigation.map((item) => (
             <div key={item.label} className="group relative">
               {/* Main Menu Item */}
               <Link
