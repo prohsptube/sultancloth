@@ -37,20 +37,20 @@ export async function GET(request: NextRequest) {
         $group: {
           _id: null,
           totalProducts: { $sum: 1 },
-          totalStock: { $sum: "$stockQuantity" },
+          totalStock: { $sum: { $ifNull: ["$stockQuantity", 0] } },
           lowStockCount: {
             $sum: {
               $cond: [
-                { $and: [{ $gt: ["$stockQuantity", 0] }, { $lte: ["$stockQuantity", 10] }] },
+                { $and: [{ $gt: [{ $ifNull: ["$stockQuantity", 0] }, 0] }, { $lte: [{ $ifNull: ["$stockQuantity", 0] }, 10] }] },
                 1,
                 0
               ]
             }
           },
           outOfStockCount: {
-            $sum: { $cond: [{ $eq: ["$stockQuantity", 0] }, 1, 0] }
+            $sum: { $cond: [{ $eq: [{ $ifNull: ["$stockQuantity", 0] }, 0] }, 1, 0] }
           },
-          averageStock: { $avg: "$stockQuantity" }
+          averageStock: { $avg: { $ifNull: ["$stockQuantity", 0] } }
         }
       }
     ]).toArray();
