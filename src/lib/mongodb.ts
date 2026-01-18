@@ -55,3 +55,13 @@ export async function getNavigationCollection() {
   const { db } = await connectToDatabase();
   return db.collection("navigation");
 }
+
+export async function getOrdersCollection() {
+  const { db } = await connectToDatabase();
+  return db.collection("orders");
+}
+
+export async function getCouponsCollection() {
+  const { db } = await connectToDatabase();
+  return db.collection("coupons");
+}

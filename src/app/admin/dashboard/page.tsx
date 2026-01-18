@@ -62,12 +62,57 @@ interface NavigationItem {
   updatedAt?: string;
 }
 
+interface Order {
+  _id: string;
+  orderNumber: string;
+  customer: {
+    name: string;
+    email: string;
+    phone: string;
+    address: string;
+  };
+  items: {
+    productId?: string;
+    name: string;
+    price: number;
+    quantity: number;
+    image?: string;
+  }[];
+  subtotal: number;
+  shipping: number;
+  discount: number;
+  total: number;
+  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
+  paymentMethod: string;
+  paymentStatus: "unpaid" | "paid";
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Coupon {
+  _id: string;
+  code: string;
+  discountType: "percentage" | "fixed";
+  discountValue: number;
+  minOrderValue: number;
+  maxDiscount?: number | null;
+  usageLimit?: number | null;
+  usedCount: number;
+  expiryDate?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<"products" | "categories" | "hero" | "navigation">("products");
+  const [activeTab, setActiveTab] = useState<"products" | "categories" | "hero" | "navigation" | "orders" | "coupons">("products");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
   const [navigationItems, setNavigationItems] = useState<NavigationItem[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [loading, setLoading] = useState(true);
   const [heroLoading, setHeroLoading] = useState(false);
   const [navLoading, setNavLoading] = useState(false);
@@ -92,6 +137,8 @@ export default function AdminDashboard() {
     quantity: "",
     sizes: [] as string[],
     sizeChart: "",
+    isFeatured: false,
+    stockQuantity: "",
   });
   const [selectedLevel1, setSelectedLevel1] = useState("");
   const [selectedLevel2, setSelectedLevel2] = useState("");
@@ -123,6 +170,21 @@ export default function AdminDashboard() {
     level: 1,
     parentId: null as string | null,
   });
+  const [couponFormData, setCouponFormData] = useState({
+    code: "",
+    discountType: "percentage" as "percentage" | "fixed",
+    discountValue: "",
+    minOrderValue: "",
+    maxDiscount: "",
+    usageLimit: "",
+    expiryDate: "",
+    isActive: true,
+  });
+  const [showCouponForm, setShowCouponForm] = useState(false);
+  const [editingCouponId, setEditingCouponId] = useState<string | null>(null);
+  const [editingOrderId, setEditingOrderId] = useState<string | null>(null);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [couponsLoading, setCouponsLoading] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -130,6 +192,8 @@ export default function AdminDashboard() {
     fetchCategories();
     fetchHeroSlides();
     fetchNavigation();
+    fetchOrders();
+    fetchCoupons();
   }, []);
 
   const fetchProducts = async () => {
@@ -183,6 +247,34 @@ export default function AdminDashboard() {
       console.error("Error loading navigation:", err);
     } finally {
       setNavLoading(false);
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      setOrdersLoading(true);
+      const res = await fetch("/api/orders");
+      if (!res.ok) throw new Error("Failed to fetch orders");
+      const data = await res.json();
+      setOrders(data);
+    } catch (err) {
+      console.error("Error loading orders:", err);
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
+  const fetchCoupons = async () => {
+    try {
+      setCouponsLoading(true);
+      const res = await fetch("/api/coupons", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch coupons");
+      const data = await res.json();
+      setCoupons(data);
+    } catch (err) {
+      console.error("Error loading coupons:", err);
+    } finally {
+      setCouponsLoading(false);
     }
   };
 
@@ -266,6 +358,138 @@ export default function AdminDashboard() {
     setShowNavForm(false);
     setEditingNavId(null);
     setNavFormData({ label: "", href: "", level: 1, parentId: null });
+  };
+
+  // COUPON HANDLERS
+  const handleAddCoupon = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!couponFormData.code || !couponFormData.discountValue) {
+      setError("Code and discount value are required");
+      return;
+    }
+
+    try {
+      const method = editingCouponId ? "PUT" : "POST";
+      const url = editingCouponId ? `/api/coupons/${editingCouponId}` : "/api/coupons";
+
+      const response = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(couponFormData),
+      });
+
+      if (response.ok) {
+        setCouponFormData({
+          code: "",
+          discountType: "percentage",
+          discountValue: "",
+          minOrderValue: "",
+          maxDiscount: "",
+          usageLimit: "",
+          expiryDate: "",
+          isActive: true,
+        });
+        setEditingCouponId(null);
+        setShowCouponForm(false);
+        await fetchCoupons();
+      } else {
+        const data = await response.json();
+        setError(data.error || "Error saving coupon");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error saving coupon");
+    }
+  };
+
+  const handleEditCoupon = (coupon: Coupon) => {
+    setEditingCouponId(coupon._id);
+    setCouponFormData({
+      code: coupon.code,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue.toString(),
+      minOrderValue: coupon.minOrderValue.toString(),
+      maxDiscount: coupon.maxDiscount?.toString() || "",
+      usageLimit: coupon.usageLimit?.toString() || "",
+      expiryDate: coupon.expiryDate ? coupon.expiryDate.split("T")[0] : "",
+      isActive: coupon.isActive,
+    });
+    setShowCouponForm(true);
+  };
+
+  const handleDeleteCoupon = async (id: string) => {
+    if (!confirm("Delete this coupon?")) return;
+
+    try {
+      const response = await fetch(`/api/coupons/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        await fetchCoupons();
+      } else {
+        setError("Error deleting coupon");
+      }
+    } catch (err) {
+      setError("Error deleting coupon");
+    }
+  };
+
+  const handleCancelCouponForm = () => {
+    setShowCouponForm(false);
+    setEditingCouponId(null);
+    setCouponFormData({
+      code: "",
+      discountType: "percentage",
+      discountValue: "",
+      minOrderValue: "",
+      maxDiscount: "",
+      usageLimit: "",
+      expiryDate: "",
+      isActive: true,
+    });
+  };
+
+  // ORDER HANDLERS
+  const handleUpdateOrderStatus = async (orderId: string, status: string) => {
+    try {
+      const response = await fetch(`/api/orders/${orderId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ status }),
+      });
+
+      if (response.ok) {
+        await fetchOrders();
+      } else {
+        setError("Error updating order status");
+      }
+    } catch (err) {
+      setError("Error updating order status");
+    }
+  };
+
+  const handleDeleteOrder = async (id: string) => {
+    if (!confirm("Delete this order?")) return;
+
+    try {
+      const response = await fetch(`/api/orders/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        await fetchOrders();
+      } else {
+        setError("Error deleting order");
+      }
+    } catch (err) {
+      setError("Error deleting order");
+    }
   };
 
   const handleLogout = async () => {
@@ -380,7 +604,21 @@ export default function AdminDashboard() {
   const handleCancelProductForm = () => {
     setShowProductForm(false);
     setEditingProductId(null);
-    setProductFormData({ name: "", category: "men", price: "", salePrice: "", discount: "", description: "", image: "", sku: "", quantity: "", sizes: [], sizeChart: "" });
+    setProductFormData({ 
+      name: "", 
+      category: "men", 
+      price: "", 
+      salePrice: "", 
+      discount: "", 
+      description: "", 
+      image: "", 
+      sku: "", 
+      quantity: "", 
+      sizes: [], 
+      sizeChart: "",
+      isFeatured: false,
+      stockQuantity: "",
+    });
     setProductImagePreview(null);
   };
 
@@ -739,6 +977,26 @@ export default function AdminDashboard() {
           >
             Navigation Menu
           </button>
+          <button
+            onClick={() => setActiveTab("orders")}
+            className={`px-4 py-2 font-medium transition ${
+              activeTab === "orders"
+                ? "text-red-600 border-b-2 border-red-600"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Orders
+          </button>
+          <button
+            onClick={() => setActiveTab("coupons")}
+            className={`px-4 py-2 font-medium transition ${
+              activeTab === "coupons"
+                ? "text-red-600 border-b-2 border-red-600"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Coupons
+          </button>
         </div>
 
         {/* PRODUCTS TAB */}
@@ -1030,7 +1288,40 @@ export default function AdminDashboard() {
                     <p className="text-xs text-gray-500 mt-1">Paste link to size chart image</p>
                   </div>
 
-                  <div className="flex gap-3">
+                  {/* Stock Quantity */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Stock Quantity
+                    </label>
+                    <input
+                      type="number"
+                      value={productFormData.stockQuantity}
+                      onChange={(e) =>
+                        setProductFormData({ ...productFormData, stockQuantity: e.target.value })
+                      }
+                      placeholder="e.g., 50"
+                      className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                    />
+                  </div>
+
+                  {/* Featured Checkbox */}
+                  <div className="md:col-span-2">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={productFormData.isFeatured}
+                        onChange={(e) =>
+                          setProductFormData({ ...productFormData, isFeatured: e.target.checked })
+                        }
+                        className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                      />
+                      <span className="text-sm font-medium text-gray-700">
+                        Feature this product (show on homepage)
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="flex gap-3 md:col-span-2">
                     <button
                       type="submit"
                       className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
@@ -1773,6 +2064,376 @@ export default function AdminDashboard() {
                         </tr>
                       );
                     })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ORDERS TAB */}
+        {activeTab === "orders" && (
+          <div>
+            {ordersLoading ? (
+              <div className="text-center py-8">
+                <p className="text-gray-600">Loading orders...</p>
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="bg-white rounded-lg p-8 text-center">
+                <p className="text-gray-600">No orders yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {orders.map((order) => (
+                  <div key={order._id} className="bg-white rounded-lg shadow-md p-6">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 className="text-lg font-bold text-gray-800">{order.orderNumber}</h3>
+                        <p className="text-sm text-gray-600">
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-2">
+                        <select
+                          value={order.status}
+                          onChange={(e) => handleUpdateOrderStatus(order._id, e.target.value)}
+                          className={`px-3 py-1 rounded-full text-sm font-medium ${
+                            order.status === "pending" ? "bg-yellow-100 text-yellow-800" :
+                            order.status === "processing" ? "bg-blue-100 text-blue-800" :
+                            order.status === "shipped" ? "bg-purple-100 text-purple-800" :
+                            order.status === "delivered" ? "bg-green-100 text-green-800" :
+                            "bg-red-100 text-red-800"
+                          }`}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="processing">Processing</option>
+                          <option value="shipped">Shipped</option>
+                          <option value="delivered">Delivered</option>
+                          <option value="cancelled">Cancelled</option>
+                        </select>
+                        <button
+                          onClick={() => handleDeleteOrder(order._id)}
+                          className="text-red-600 hover:text-red-800 transition"
+                          title="Delete Order"
+                        >
+                          <Trash2 size={18} />
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <h4 className="font-semibold text-gray-700 mb-2">Customer</h4>
+                        <p className="text-sm text-gray-600">{order.customer.name}</p>
+                        <p className="text-sm text-gray-600">{order.customer.email}</p>
+                        <p className="text-sm text-gray-600">{order.customer.phone}</p>
+                        <p className="text-sm text-gray-600 mt-1">{order.customer.address}</p>
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-gray-700 mb-2">Payment</h4>
+                        <p className="text-sm text-gray-600">
+                          Method: <span className="font-medium">{order.paymentMethod.toUpperCase()}</span>
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Status: <span className={`font-medium ${order.paymentStatus === "paid" ? "text-green-600" : "text-red-600"}`}>
+                            {order.paymentStatus.toUpperCase()}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="border-t pt-4">
+                      <h4 className="font-semibold text-gray-700 mb-2">Items</h4>
+                      <div className="space-y-2">
+                        {order.items.map((item, index) => (
+                          <div key={index} className="flex justify-between items-center text-sm">
+                            <div>
+                              <span className="text-gray-800">{item.name}</span>
+                              <span className="text-gray-500 ml-2">x{item.quantity}</span>
+                            </div>
+                            <span className="text-gray-800 font-medium">
+                              PKR {(item.price * item.quantity).toFixed(2)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="border-t mt-4 pt-4">
+                      <div className="flex justify-between text-sm mb-1">
+                        <span className="text-gray-600">Subtotal:</span>
+                        <span className="text-gray-800">PKR {order.subtotal.toFixed(2)}</span>
+                      </div>
+                      {order.shipping > 0 && (
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-gray-600">Shipping:</span>
+                          <span className="text-gray-800">PKR {order.shipping.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {order.discount > 0 && (
+                        <div className="flex justify-between text-sm mb-1">
+                          <span className="text-gray-600">Discount:</span>
+                          <span className="text-red-600">-PKR {order.discount.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between font-bold text-lg mt-2">
+                        <span className="text-gray-800">Total:</span>
+                        <span className="text-red-600">PKR {order.total.toFixed(2)}</span>
+                      </div>
+                    </div>
+
+                    {order.notes && (
+                      <div className="border-t mt-4 pt-4">
+                        <h4 className="font-semibold text-gray-700 mb-1">Notes</h4>
+                        <p className="text-sm text-gray-600">{order.notes}</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* COUPONS TAB */}
+        {activeTab === "coupons" && (
+          <div>
+            {showCouponForm && (
+              <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+                <h2 className="text-xl font-bold text-gray-800 mb-4">
+                  {editingCouponId ? "Edit Coupon" : "Add Coupon"}
+                </h2>
+                <form onSubmit={handleAddCoupon} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Coupon Code *
+                      </label>
+                      <input
+                        type="text"
+                        value={couponFormData.code}
+                        onChange={(e) =>
+                          setCouponFormData({ ...couponFormData, code: e.target.value.toUpperCase() })
+                        }
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                        placeholder="e.g., SAVE20"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Discount Type *
+                      </label>
+                      <select
+                        value={couponFormData.discountType}
+                        onChange={(e) =>
+                          setCouponFormData({
+                            ...couponFormData,
+                            discountType: e.target.value as "percentage" | "fixed",
+                          })
+                        }
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                      >
+                        <option value="percentage">Percentage (%)</option>
+                        <option value="fixed">Fixed Amount (PKR)</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Discount Value *
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={couponFormData.discountValue}
+                        onChange={(e) =>
+                          setCouponFormData({ ...couponFormData, discountValue: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                        placeholder="e.g., 20"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Min Order Value (PKR)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={couponFormData.minOrderValue}
+                        onChange={(e) =>
+                          setCouponFormData({ ...couponFormData, minOrderValue: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                        placeholder="0"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Max Discount (PKR)
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={couponFormData.maxDiscount}
+                        onChange={(e) =>
+                          setCouponFormData({ ...couponFormData, maxDiscount: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                        placeholder="Optional"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Usage Limit
+                      </label>
+                      <input
+                        type="number"
+                        value={couponFormData.usageLimit}
+                        onChange={(e) =>
+                          setCouponFormData({ ...couponFormData, usageLimit: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                        placeholder="Unlimited"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Expiry Date
+                      </label>
+                      <input
+                        type="date"
+                        value={couponFormData.expiryDate}
+                        onChange={(e) =>
+                          setCouponFormData({ ...couponFormData, expiryDate: e.target.value })
+                        }
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                      />
+                    </div>
+
+                    <div className="flex items-center">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={couponFormData.isActive}
+                          onChange={(e) =>
+                            setCouponFormData({ ...couponFormData, isActive: e.target.checked })
+                          }
+                          className="w-4 h-4 text-red-600 border-gray-300 rounded focus:ring-red-500"
+                        />
+                        <span className="text-sm font-medium text-gray-700">Active</span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 pt-4">
+                    <button
+                      type="submit"
+                      className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition"
+                    >
+                      {editingCouponId ? "Update" : "Create"} Coupon
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleCancelCouponForm}
+                      className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                  {error && <p className="text-red-600 text-sm mt-2">{error}</p>}
+                </form>
+              </div>
+            )}
+
+            {!showCouponForm && (
+              <button
+                onClick={() => setShowCouponForm(true)}
+                className="flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition mb-6"
+              >
+                <Plus size={20} />
+                Add Coupon
+              </button>
+            )}
+
+            {couponsLoading ? (
+              <div className="text-center py-8">
+                <p className="text-gray-600">Loading coupons...</p>
+              </div>
+            ) : coupons.length === 0 ? (
+              <div className="bg-white rounded-lg p-8 text-center">
+                <p className="text-gray-600">No coupons yet. Add one to get started!</p>
+              </div>
+            ) : (
+              <div className="bg-white rounded-lg shadow-md overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-gray-100 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Code</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Discount</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Min Order</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Usage</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Expiry</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {coupons.map((coupon) => (
+                      <tr key={coupon._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 text-sm font-mono font-bold text-gray-800">
+                          {coupon.code}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {coupon.discountType === "percentage"
+                            ? `${coupon.discountValue}%`
+                            : `PKR ${coupon.discountValue}`}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          PKR {coupon.minOrderValue}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {coupon.usedCount} / {coupon.usageLimit || "∞"}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {coupon.expiryDate
+                            ? new Date(coupon.expiryDate).toLocaleDateString()
+                            : "No expiry"}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              coupon.isActive
+                                ? "bg-green-100 text-green-800"
+                                : "bg-gray-100 text-gray-800"
+                            }`}
+                          >
+                            {coupon.isActive ? "Active" : "Inactive"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-sm flex gap-2">
+                          <button
+                            onClick={() => handleEditCoupon(coupon)}
+                            className="text-blue-600 hover:text-blue-800 transition"
+                          >
+                            <Edit size={18} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCoupon(coupon._id)}
+                            className="text-red-600 hover:text-red-800 transition"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
