@@ -535,7 +535,21 @@ export default function AdminDashboard() {
       });
 
       if (response.ok) {
-        setProductFormData({ name: "", category: "men", price: "", salePrice: "", discount: "", description: "", image: "", sku: "", quantity: "", sizes: [], sizeChart: "" });
+        setProductFormData({ 
+          name: "", 
+          category: "men", 
+          price: "", 
+          salePrice: "", 
+          discount: "", 
+          description: "", 
+          image: "", 
+          sku: "", 
+          quantity: "", 
+          sizes: [], 
+          sizeChart: "",
+          isFeatured: false,
+          stockQuantity: "",
+        });
         setEditingProductId(null);
         setShowProductForm(false);
         setSelectedMainCategory("");
