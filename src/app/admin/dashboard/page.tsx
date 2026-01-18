@@ -2007,7 +2007,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={settings.storeName || ""}
                       onChange={(e) => setSettings({...settings, storeName: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
                     />
                   </div>
                   <div>
@@ -2016,7 +2016,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={settings.tagline || ""}
                       onChange={(e) => setSettings({...settings, tagline: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -2026,7 +2026,7 @@ export default function AdminDashboard() {
                       value={settings.logo || ""}
                       onChange={(e) => setSettings({...settings, logo: e.target.value})}
                       placeholder="https://example.com/logo.png"
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900 placeholder:text-gray-400"
                     />
                   </div>
                   <div className="md:col-span-2">
@@ -2041,7 +2041,7 @@ export default function AdminDashboard() {
                           onChange={(e) => setSettings({...settings, headerDisplay: e.target.value})}
                           className="text-red-600 focus:ring-red-500"
                         />
-                        <span className="text-sm font-medium">Logo Only</span>
+                        <span className="text-sm font-medium text-gray-900">Logo Only</span>
                       </label>
                       <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:border-red-500 transition">
                         <input
@@ -2052,7 +2052,7 @@ export default function AdminDashboard() {
                           onChange={(e) => setSettings({...settings, headerDisplay: e.target.value})}
                           className="text-red-600 focus:ring-red-500"
                         />
-                        <span className="text-sm font-medium">Name Only</span>
+                        <span className="text-sm font-medium text-gray-900">Name Only</span>
                       </label>
                       <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:border-red-500 transition">
                         <input
@@ -2063,7 +2063,7 @@ export default function AdminDashboard() {
                           onChange={(e) => setSettings({...settings, headerDisplay: e.target.value})}
                           className="text-red-600 focus:ring-red-500"
                         />
-                        <span className="text-sm font-medium">Logo + Name</span>
+                        <span className="text-sm font-medium text-gray-900">Logo + Name</span>
                       </label>
                       <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:border-red-500 transition">
                         <input
@@ -2074,7 +2074,7 @@ export default function AdminDashboard() {
                           onChange={(e) => setSettings({...settings, headerDisplay: e.target.value})}
                           className="text-red-600 focus:ring-red-500"
                         />
-                        <span className="text-sm font-medium">Stacked</span>
+                        <span className="text-sm font-medium text-gray-900">Stacked</span>
                       </label>
                     </div>
                     <p className="text-xs text-gray-500 mt-2">Choose how your brand appears in the header</p>
@@ -2092,7 +2092,7 @@ export default function AdminDashboard() {
                       type="email"
                       value={settings.email || ""}
                       onChange={(e) => setSettings({...settings, email: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
                     />
                   </div>
                   <div>
@@ -2101,7 +2101,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={settings.phone || ""}
                       onChange={(e) => setSettings({...settings, phone: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
                     />
                   </div>
                   <div>
@@ -2111,7 +2111,7 @@ export default function AdminDashboard() {
                       value={settings.whatsapp || ""}
                       onChange={(e) => setSettings({...settings, whatsapp: e.target.value})}
                       placeholder="+92 300 1234567"
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900 placeholder:text-gray-400"
                     />
                   </div>
                   <div>
@@ -2120,7 +2120,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={settings.address || ""}
                       onChange={(e) => setSettings({...settings, address: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
                     />
                   </div>
                 </div>
@@ -2137,7 +2137,7 @@ export default function AdminDashboard() {
                       value={settings.facebook || ""}
                       onChange={(e) => setSettings({...settings, facebook: e.target.value})}
                       placeholder="https://facebook.com/..."
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900 placeholder:text-gray-400"
                     />
                   </div>
                   <div>
@@ -2147,7 +2147,7 @@ export default function AdminDashboard() {
                       value={settings.instagram || ""}
                       onChange={(e) => setSettings({...settings, instagram: e.target.value})}
                       placeholder="https://instagram.com/..."
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900 placeholder:text-gray-400"
                     />
                   </div>
                   <div>
@@ -2157,7 +2157,7 @@ export default function AdminDashboard() {
                       value={settings.twitter || ""}
                       onChange={(e) => setSettings({...settings, twitter: e.target.value})}
                       placeholder="https://twitter.com/..."
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900 placeholder:text-gray-400"
                     />
                   </div>
                 </div>
@@ -2173,7 +2173,7 @@ export default function AdminDashboard() {
                       type="text"
                       value={settings.currency || "Rs."}
                       onChange={(e) => setSettings({...settings, currency: e.target.value})}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
                     />
                   </div>
                   <div>
@@ -2182,7 +2182,7 @@ export default function AdminDashboard() {
                       type="number"
                       value={settings.taxRate || 0}
                       onChange={(e) => setSettings({...settings, taxRate: parseFloat(e.target.value) || 0})}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
                     />
                   </div>
                   <div>
@@ -2191,7 +2191,7 @@ export default function AdminDashboard() {
                       type="number"
                       value={settings.shippingFee || 0}
                       onChange={(e) => setSettings({...settings, shippingFee: parseFloat(e.target.value) || 0})}
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
                     />
                   </div>
                   <div>
@@ -2201,7 +2201,7 @@ export default function AdminDashboard() {
                       value={settings.freeShippingThreshold || 0}
                       onChange={(e) => setSettings({...settings, freeShippingThreshold: parseFloat(e.target.value) || 0})}
                       placeholder="Minimum order for free shipping"
-                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900 placeholder:text-gray-400"
                     />
                   </div>
                 </div>
