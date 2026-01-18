@@ -146,7 +146,7 @@ interface Analytics {
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "categories" | "hero" | "navigation" | "orders" | "coupons" | "customers" | "reviews" | "inventory" | "reports" | "shipping">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "categories" | "hero" | "navigation" | "orders" | "coupons" | "customers" | "reviews" | "inventory" | "reports" | "shipping" | "settings">("dashboard");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
@@ -159,6 +159,7 @@ export default function AdminDashboard() {
   const [inventory, setInventory] = useState<any>(null);
   const [reportData, setReportData] = useState<any>(null);
   const [shippingMethods, setShippingMethods] = useState<any[]>([]);
+  const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [heroLoading, setHeroLoading] = useState(false);
   const [navLoading, setNavLoading] = useState(false);
@@ -246,6 +247,7 @@ export default function AdminDashboard() {
     fetchInventory();
     fetchReports();
     fetchShipping();
+    fetchSettings();
   }, []);
 
   const fetchProducts = async () => {
@@ -396,6 +398,36 @@ export default function AdminDashboard() {
       setShippingMethods(data);
     } catch (err) {
       console.error("Error loading shipping methods:", err);
+    }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const res = await fetch("/api/settings");
+      if (!res.ok) throw new Error("Failed to fetch settings");
+      const data = await res.json();
+      setSettings(data);
+    } catch (err) {
+      console.error("Error loading settings:", err);
+    }
+  };
+
+  const handleSaveSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const res = await fetch("/api/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(settings)
+      });
+      if (res.ok) {
+        alert("Settings saved successfully!");
+      } else {
+        alert("Failed to save settings");
+      }
+    } catch (err) {
+      alert("Error saving settings");
     }
   };
 
@@ -1202,6 +1234,16 @@ export default function AdminDashboard() {
           >
             Shipping
           </button>
+          <button
+            onClick={() => setActiveTab("settings")}
+            className={`px-3 py-2 font-medium transition text-sm ${
+              activeTab === "settings"
+                ? "text-red-600 border-b-2 border-red-600"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Settings
+          </button>
         </div>
 
         {/* DASHBOARD TAB */}
@@ -1946,6 +1988,184 @@ export default function AdminDashboard() {
                 No shipping methods configured
               </div>
             )}
+          </div>
+        )}
+
+        {/* SETTINGS TAB */}
+        {activeTab === "settings" && settings && (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Site Settings</h2>
+            
+            <form onSubmit={handleSaveSettings} className="space-y-6">
+              {/* Store Information */}
+              <div className="border-b pb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Store Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Store Name</label>
+                    <input
+                      type="text"
+                      value={settings.storeName || ""}
+                      onChange={(e) => setSettings({...settings, storeName: e.target.value})}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tagline</label>
+                    <input
+                      type="text"
+                      value={settings.tagline || ""}
+                      onChange={(e) => setSettings({...settings, tagline: e.target.value})}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Logo URL</label>
+                    <input
+                      type="text"
+                      value={settings.logo || ""}
+                      onChange={(e) => setSettings({...settings, logo: e.target.value})}
+                      placeholder="https://example.com/logo.png"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Information */}
+              <div className="border-b pb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Contact Information</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input
+                      type="email"
+                      value={settings.email || ""}
+                      onChange={(e) => setSettings({...settings, email: e.target.value})}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                    <input
+                      type="text"
+                      value={settings.phone || ""}
+                      onChange={(e) => setSettings({...settings, phone: e.target.value})}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">WhatsApp</label>
+                    <input
+                      type="text"
+                      value={settings.whatsapp || ""}
+                      onChange={(e) => setSettings({...settings, whatsapp: e.target.value})}
+                      placeholder="+92 300 1234567"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                    <input
+                      type="text"
+                      value={settings.address || ""}
+                      onChange={(e) => setSettings({...settings, address: e.target.value})}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Social Media */}
+              <div className="border-b pb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Social Media</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Facebook</label>
+                    <input
+                      type="text"
+                      value={settings.facebook || ""}
+                      onChange={(e) => setSettings({...settings, facebook: e.target.value})}
+                      placeholder="https://facebook.com/..."
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
+                    <input
+                      type="text"
+                      value={settings.instagram || ""}
+                      onChange={(e) => setSettings({...settings, instagram: e.target.value})}
+                      placeholder="https://instagram.com/..."
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Twitter</label>
+                    <input
+                      type="text"
+                      value={settings.twitter || ""}
+                      onChange={(e) => setSettings({...settings, twitter: e.target.value})}
+                      placeholder="https://twitter.com/..."
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Business Settings */}
+              <div className="border-b pb-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Business Settings</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Currency Symbol</label>
+                    <input
+                      type="text"
+                      value={settings.currency || "Rs."}
+                      onChange={(e) => setSettings({...settings, currency: e.target.value})}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Tax Rate (%)</label>
+                    <input
+                      type="number"
+                      value={settings.taxRate || 0}
+                      onChange={(e) => setSettings({...settings, taxRate: parseFloat(e.target.value) || 0})}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Default Shipping Fee</label>
+                    <input
+                      type="number"
+                      value={settings.shippingFee || 0}
+                      onChange={(e) => setSettings({...settings, shippingFee: parseFloat(e.target.value) || 0})}
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Free Shipping Threshold</label>
+                    <input
+                      type="number"
+                      value={settings.freeShippingThreshold || 0}
+                      onChange={(e) => setSettings({...settings, freeShippingThreshold: parseFloat(e.target.value) || 0})}
+                      placeholder="Minimum order for free shipping"
+                      className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                >
+                  Save Settings
+                </button>
+              </div>
+            </form>
           </div>
         )}
 
