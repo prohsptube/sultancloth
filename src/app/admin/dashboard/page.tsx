@@ -31,6 +31,18 @@ interface Category {
   parentId?: string | null;
 }
 
+interface HomepageCategory {
+  _id: string;
+  title: string;
+  description: string;
+  image: string;
+  categoryId?: string | null;
+  subcategories: { label: string; href: string; }[];
+  order: number;
+  columnsPerRow: 1 | 2 | 3;
+  isActive: boolean;
+}
+
 interface HeroSlide {
   _id: string;
   title: string;
@@ -147,7 +159,7 @@ interface Analytics {
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "categories" | "hero" | "navigation" | "orders" | "coupons" | "customers" | "reviews" | "inventory" | "reports" | "shipping" | "settings">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "categories" | "hero" | "navigation" | "orders" | "coupons" | "customers" | "reviews" | "inventory" | "reports" | "shipping" | "settings" | "homepage">("dashboard");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
@@ -161,6 +173,18 @@ export default function AdminDashboard() {
   const [reportData, setReportData] = useState<any>(null);
   const [shippingMethods, setShippingMethods] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>(null);
+  const [homepageCategories, setHomepageCategories] = useState<HomepageCategory[]>([]);
+  const [showHomepageCategoryForm, setShowHomepageCategoryForm] = useState(false);
+  const [editingHomepageCategoryId, setEditingHomepageCategoryId] = useState<string | null>(null);
+  const [homepageCategoryFormData, setHomepageCategoryFormData] = useState({
+    title: "",
+    description: "",
+    image: "",
+    categoryId: null as string | null,
+    subcategories: [] as { label: string; href: string; }[],
+    columnsPerRow: 2 as 1 | 2 | 3,
+    isActive: true,
+  });
   const [loading, setLoading] = useState(true);
   const [heroLoading, setHeroLoading] = useState(false);
   const [navLoading, setNavLoading] = useState(false);
@@ -250,6 +274,7 @@ export default function AdminDashboard() {
     fetchReports();
     fetchShipping();
     fetchSettings();
+    fetchHomepageCategories();
   }, []);
 
   const fetchProducts = async () => {
@@ -412,6 +437,95 @@ export default function AdminDashboard() {
       setSettings(data);
     } catch (err) {
       console.error("Error loading settings:", err);
+    }
+  };
+
+  const fetchHomepageCategories = async () => {
+    try {
+      const res = await fetch("/api/homepage-categories");
+      if (!res.ok) throw new Error("Failed to fetch homepage categories");
+      const data = await res.json();
+      setHomepageCategories(data);
+    } catch (err) {
+      console.error("Error loading homepage categories:", err);
+    }
+  };
+
+  const handleAddHomepageCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const method = editingHomepageCategoryId ? "PUT" : "POST";
+      const url = editingHomepageCategoryId 
+        ? `/api/homepage-categories/${editingHomepageCategoryId}`
+        : "/api/homepage-categories";
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(homepageCategoryFormData),
+      });
+
+      if (res.ok) {
+        setHomepageCategoryFormData({
+          title: "",
+          description: "",
+          image: "",
+          categoryId: null,
+          subcategories: [],
+          columnsPerRow: 2,
+          isActive: true,
+        });
+        setEditingHomepageCategoryId(null);
+        setShowHomepageCategoryForm(false);
+        await fetchHomepageCategories();
+        alert(editingHomepageCategoryId ? "Category updated!" : "Category added!");
+      } else {
+        alert("Failed to save category");
+      }
+    } catch (err) {
+      alert("Error saving category");
+    }
+  };
+
+  const handleDeleteHomepageCategory = async (id: string) => {
+    if (!confirm("Delete this category from homepage?")) return;
+    try {
+      const res = await fetch(`/api/homepage-categories/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (res.ok) {
+        await fetchHomepageCategories();
+        alert("Category deleted!");
+      }
+    } catch (err) {
+      alert("Error deleting category");
+    }
+  };
+
+  const handleMoveHomepageCategory = async (id: string, direction: "up" | "down") => {
+    const index = homepageCategories.findIndex(cat => cat._id === id);
+    if (index === -1) return;
+    if (direction === "up" && index === 0) return;
+    if (direction === "down" && index === homepageCategories.length - 1) return;
+
+    const newCategories = [...homepageCategories];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+    [newCategories[index], newCategories[targetIndex]] = [newCategories[targetIndex], newCategories[index]];
+
+    setHomepageCategories(newCategories);
+
+    try {
+      await fetch("/api/homepage-categories/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ orderedIds: newCategories.map(cat => cat._id) }),
+      });
+    } catch (err) {
+      console.error("Error reordering categories:", err);
+      await fetchHomepageCategories();
     }
   };
 
@@ -1260,6 +1374,16 @@ export default function AdminDashboard() {
             }`}
           >
             Settings
+          </button>
+          <button
+            onClick={() => setActiveTab("homepage")}
+            className={`px-3 py-2 font-medium transition text-sm ${
+              activeTab === "homepage"
+                ? "text-red-600 border-b-2 border-red-600"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Homepage
           </button>
         </div>
 
@@ -2233,6 +2357,199 @@ export default function AdminDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        )}
+
+        {/* HOMEPAGE TAB */}
+        {activeTab === "homepage" && (
+          <div>
+            <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-2xl font-bold text-gray-800">Homepage Categories</h2>
+                <button
+                  onClick={() => {
+                    setShowHomepageCategoryForm(!showHomepageCategoryForm);
+                    setEditingHomepageCategoryId(null);
+                    setHomepageCategoryFormData({
+                      title: "",
+                      description: "",
+                      image: "",
+                      categoryId: null,
+                      subcategories: [],
+                      columnsPerRow: 2,
+                      isActive: true,
+                    });
+                  }}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center gap-2"
+                >
+                  <span className="text-xl">+</span> Add Category
+                </button>
+              </div>
+
+              {showHomepageCategoryForm && (
+                <form onSubmit={handleAddHomepageCategory} className="mb-8 p-6 border rounded-lg bg-gray-50">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    {editingHomepageCategoryId ? "Edit Category" : "Add New Category"}
+                  </h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                      <input
+                        type="text"
+                        required
+                        value={homepageCategoryFormData.title}
+                        onChange={(e) => setHomepageCategoryFormData({...homepageCategoryFormData, title: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                      <textarea
+                        value={homepageCategoryFormData.description}
+                        onChange={(e) => setHomepageCategoryFormData({...homepageCategoryFormData, description: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
+                        rows={3}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
+                      <input
+                        type="text"
+                        value={homepageCategoryFormData.image}
+                        onChange={(e) => setHomepageCategoryFormData({...homepageCategoryFormData, image: e.target.value})}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
+                        placeholder="https://example.com/image.jpg"
+                      />
+                      {homepageCategoryFormData.image && (
+                        <img src={homepageCategoryFormData.image} alt="Preview" className="mt-2 h-20 rounded border" onError={(e) => e.currentTarget.style.display = 'none'} />
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Columns per Row</label>
+                      <div className="flex gap-4">
+                        {([1, 2, 3] as const).map(cols => (
+                          <label key={cols} className="flex items-center gap-2">
+                            <input
+                              type="radio"
+                              name="columns"
+                              value={cols}
+                              checked={homepageCategoryFormData.columnsPerRow === cols}
+                              onChange={() => setHomepageCategoryFormData({...homepageCategoryFormData, columnsPerRow: cols})}
+                              className="text-red-600 focus:ring-red-500"
+                            />
+                            <span className="text-sm text-gray-900">{cols} Column{cols > 1 ? 's' : ''}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        checked={homepageCategoryFormData.isActive}
+                        onChange={(e) => setHomepageCategoryFormData({...homepageCategoryFormData, isActive: e.target.checked})}
+                        className="rounded text-red-600 focus:ring-red-500"
+                      />
+                      <label className="text-sm font-medium text-gray-700">Active (Show on Homepage)</label>
+                    </div>
+                    <div className="flex gap-3 pt-4">
+                      <button type="submit" className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                        {editingHomepageCategoryId ? "Update" : "Add"} Category
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowHomepageCategoryForm(false);
+                          setEditingHomepageCategoryId(null);
+                          setHomepageCategoryFormData({
+                            title: "",
+                            description: "",
+                            image: "",
+                            categoryId: null,
+                            subcategories: [],
+                            columnsPerRow: 2,
+                            isActive: true,
+                          });
+                        }}
+                        className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </form>
+              )}
+
+              <div className="space-y-4">
+                {homepageCategories.map((cat, index) => (
+                  <div key={cat._id} className="p-4 border rounded-lg bg-white flex items-center gap-4">
+                    <div className="flex flex-col gap-1">
+                      <button
+                        onClick={() => handleMoveHomepageCategory(cat._id, "up")}
+                        disabled={index === 0}
+                        className={`p-1 rounded ${index === 0 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+                        title="Move up"
+                      >
+                        ▲
+                      </button>
+                      <button
+                        onClick={() => handleMoveHomepageCategory(cat._id, "down")}
+                        disabled={index === homepageCategories.length - 1}
+                        className={`p-1 rounded ${index === homepageCategories.length - 1 ? 'text-gray-300 cursor-not-allowed' : 'text-gray-600 hover:bg-gray-100'}`}
+                        title="Move down"
+                      >
+                        ▼
+                      </button>
+                    </div>
+                    {cat.image && (
+                      <img src={cat.image} alt={cat.title} className="w-16 h-16 object-cover rounded" onError={(e) => e.currentTarget.style.display = 'none'} />
+                    )}
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">{cat.title}</h3>
+                      <p className="text-sm text-gray-600">{cat.description}</p>
+                      <div className="flex gap-3 mt-1 text-xs text-gray-500">
+                        <span>Order: {cat.order}</span>
+                        <span>Columns: {cat.columnsPerRow}</span>
+                        <span className={cat.isActive ? "text-green-600" : "text-red-600"}>
+                          {cat.isActive ? "Active" : "Inactive"}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          setEditingHomepageCategoryId(cat._id);
+                          setHomepageCategoryFormData({
+                            title: cat.title,
+                            description: cat.description || "",
+                            image: cat.image || "",
+                            categoryId: cat.categoryId || null,
+                            subcategories: cat.subcategories || [],
+                            columnsPerRow: cat.columnsPerRow,
+                            isActive: cat.isActive,
+                          });
+                          setShowHomepageCategoryForm(true);
+                        }}
+                        className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteHomepageCategory(cat._id)}
+                        className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+
+                {homepageCategories.length === 0 && (
+                  <div className="text-center py-12 text-gray-500">
+                    No categories configured for homepage. Add one to get started!
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 

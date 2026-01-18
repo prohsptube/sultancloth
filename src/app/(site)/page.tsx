@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Container } from "@/components/layout/Container";
 import { HeroCarousel } from "@/components/layout/HeroCarousel";
-import { getHeroSlidesCollection } from "@/lib/mongodb";
+import { getHeroSlidesCollection, connectToDatabase } from "@/lib/mongodb";
 
 type HeroSlide = {
   _id?: string;
@@ -16,69 +16,22 @@ type HeroSlide = {
   order?: number;
 };
 
-type FeaturedCategory = {
+type HomepageCategory = {
+  _id: string;
   title: string;
-  blurb: string;
-  links: { label: string; href: string }[];
+  description: string;
+  image?: string;
+  categoryId?: string | null;
+  subcategories: { label: string; href: string }[];
+  order: number;
+  columnsPerRow: number;
+  isActive: boolean;
 };
-
-const featuredCategories: FeaturedCategory[] = [
-  {
-    title: "Men",
-    blurb: "Eastern and western essentials",
-    links: [
-      { label: "Shalwar Kameez", href: "/collections/mens-kameez" },
-      { label: "Kurtas", href: "/collections/mens-kurtas" },
-      { label: "Waistcoats", href: "/collections/mens-waistcoats" },
-      { label: "Shirts", href: "/collections/mens-shirts" },
-      { label: "Trousers", href: "/collections/mens-trousers" },
-      { label: "Winter Wear", href: "/collections/mens-winter" },
-    ],
-  },
-  {
-    title: "Women",
-    blurb: "Suits, pret, and separates",
-    links: [
-      { label: "Stitched Suits", href: "/collections/womens-suits" },
-      { label: "Unstitched", href: "/collections/womens-fabric" },
-      { label: "Ready to Wear", href: "/collections/womens-pret" },
-      { label: "Separates", href: "/collections/womens-separates" },
-      { label: "Winter Wear", href: "/collections/womens-winter" },
-    ],
-  },
-  {
-    title: "Kids",
-    blurb: "Eastern and western for boys and girls",
-    links: [
-      { label: "Boys Eastern", href: "/collections/boys-eastern" },
-      { label: "Boys Western", href: "/collections/boys-western" },
-      { label: "Girls Eastern", href: "/collections/girls-eastern" },
-      { label: "Girls Western", href: "/collections/girls-western" },
-    ],
-  },
-  {
-    title: "Unstitched",
-    blurb: "Fabric cuts and seasonal drops",
-    links: [
-      { label: "Men Unstitched", href: "/collections/unstitched-men" },
-      { label: "Women Unstitched", href: "/collections/unstitched-women" },
-      { label: "Premium Boski", href: "/collections/unstitched-boski" },
-      { label: "Winter Khaddar", href: "/collections/unstitched-men-khaddar" },
-    ],
-  },
-  {
-    title: "Fragrances",
-    blurb: "Perfumes for every mood",
-    links: [
-      { label: "For Men", href: "/collections/fragrances-men" },
-      { label: "For Women", href: "/collections/fragrances-women" },
-    ],
-  },
-];
 
 export default async function HomePage() {
   // Fetch hero slides directly on the server for instant render
   let heroSlides: HeroSlide[] = [];
+  let homepageCategories: HomepageCategory[] = [];
 
   try {
     const slidesCol = await getHeroSlidesCollection();
@@ -104,6 +57,31 @@ export default async function HomePage() {
     console.error("[HomePage] Failed to fetch hero slides from DB:", error);
   }
 
+  // Fetch homepage categories from database
+  try {
+    const { db } = await connectToDatabase();
+    const categoriesCol = db.collection("homepage_categories");
+    
+    const rawCategories = await categoriesCol
+      .find({ isActive: true })
+      .sort({ order: 1 })
+      .toArray();
+
+    homepageCategories = rawCategories.map((cat) => ({
+      _id: String(cat._id),
+      title: cat.title,
+      description: cat.description || "",
+      image: cat.image || "",
+      categoryId: cat.categoryId || null,
+      subcategories: cat.subcategories || [],
+      order: cat.order || 0,
+      columnsPerRow: cat.columnsPerRow || 2,
+      isActive: cat.isActive !== false,
+    }));
+  } catch (error) {
+    console.error("[HomePage] Failed to fetch homepage categories from DB:", error);
+  }
+
   return (
     <div className="min-h-screen bg-white">
       <HeroCarousel initialSlides={heroSlides} />
@@ -120,30 +98,48 @@ export default async function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {featuredCategories.map((category) => (
-              <div
-                key={category.title}
-                className="rounded-xl border-2 border-red-200 bg-white shadow-sm transition hover:border-red-600 hover:shadow-md"
-              >
-                <div className="px-5 py-4 border-b border-red-100">
-                  <div className="text-base font-semibold text-gray-900">{category.title}</div>
-                  <div className="text-xs text-gray-600">{category.blurb}</div>
+          {homepageCategories.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              No categories available at the moment.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {homepageCategories.map((category) => (
+                <div
+                  key={category._id}
+                  className="rounded-xl border-2 border-red-200 bg-white shadow-sm transition hover:border-red-600 hover:shadow-md"
+                >
+                  <div className="px-5 py-4 border-b border-red-100">
+                    {category.image && (
+                      <img 
+                        src={category.image} 
+                        alt={category.title} 
+                        className="w-full h-32 object-cover rounded-lg mb-3"
+                        onError={(e) => e.currentTarget.style.display = 'none'}
+                      />
+                    )}
+                    <div className="text-base font-semibold text-gray-900">{category.title}</div>
+                    <div className="text-xs text-gray-600">{category.description}</div>
+                  </div>
+                  <div className={`grid gap-2 px-5 py-4 ${
+                    category.columnsPerRow === 1 ? 'grid-cols-1' : 
+                    category.columnsPerRow === 3 ? 'grid-cols-1 sm:grid-cols-3' : 
+                    'grid-cols-1 sm:grid-cols-2'
+                  }`}>
+                    {category.subcategories.map((link) => (
+                      <Link
+                        key={link.href}
+                        href={link.href}
+                        className="rounded-lg border border-red-100 bg-white px-3 py-2 text-sm font-medium text-gray-800 transition hover:border-red-500 hover:text-red-600 hover:shadow"
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
                 </div>
-                <div className="grid grid-cols-1 gap-2 px-5 py-4 sm:grid-cols-2">
-                  {category.links.map((link) => (
-                    <Link
-                      key={link.href}
-                      href={link.href}
-                      className="rounded-lg border border-red-100 bg-white px-3 py-2 text-sm font-medium text-gray-800 transition hover:border-red-500 hover:text-red-600 hover:shadow"
-                    >
-                      {link.label}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       </Container>
     </div>
