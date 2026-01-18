@@ -417,11 +417,16 @@ export default function AdminDashboard() {
     e.preventDefault();
     try {
       console.log("[Admin] Saving settings:", settings);
+      
+      // Remove _id and type fields before sending (API will add them back)
+      const { _id, type, updatedAt, ...settingsToSave } = settings;
+      console.log("[Admin] Cleaned settings:", settingsToSave);
+      
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(settings)
+        body: JSON.stringify(settingsToSave)
       });
       
       const data = await res.json();
