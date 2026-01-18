@@ -21,6 +21,7 @@ export function Header() {
     headerDisplay: "logo-and-name"
   });
   const [loading, setLoading] = useState(true);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -42,6 +43,7 @@ export function Header() {
         console.error("[Header] Failed to fetch settings:", err);
       } finally {
         setLoading(false);
+        setMounted(true);
       }
     };
     
@@ -117,6 +119,29 @@ export function Header() {
         );
     }
   };
+
+  // Don't render until settings are loaded to prevent flash
+  if (!mounted) {
+    return (
+      <header className="sticky top-0 z-50 border-b-2 border-red-600 bg-white backdrop-blur supports-[backdrop-filter]:backdrop-blur-lg shadow-lg">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6 gap-4">
+          <div className="flex items-center flex-shrink-0">
+            <div className="h-14 w-48 bg-gray-100 animate-pulse rounded"></div>
+          </div>
+          <div className="hidden md:flex flex-1 max-w-md">
+            <div className="h-10 w-full bg-gray-100 animate-pulse rounded-full"></div>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="h-10 w-20 bg-gray-100 animate-pulse rounded-full"></div>
+            <div className="h-10 w-16 bg-gray-100 animate-pulse rounded-full"></div>
+          </div>
+        </div>
+        <div className="border-t border-red-200 bg-white/98">
+          <div className="mx-auto max-w-7xl px-4 md:px-6 h-12"></div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header className="sticky top-0 z-50 border-b-2 border-red-600 bg-white backdrop-blur supports-[backdrop-filter]:backdrop-blur-lg shadow-lg">
