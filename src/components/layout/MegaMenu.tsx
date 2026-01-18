@@ -1,7 +1,10 @@
 // src/components/layout/MegaMenu.tsx
+"use client";
+
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import { mainNavigation } from "@/lib/navigation";
+import { useState, useEffect } from "react";
 
 interface NavSubItem {
   label: string;
@@ -27,42 +30,36 @@ interface DBCategory {
   parentId?: string | null;
 }
 
-export async function MegaMenu() {
-  let navigation: NavMenu[] = mainNavigation;
-  let dbCategories: DBCategory[] = [];
+export function MegaMenu() {
+  const [navigation, setNavigation] = useState<NavMenu[]>(mainNavigation);
+  const [dbCategories, setDbCategories] = useState<DBCategory[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  try {
-    // Use relative URLs for server-side fetching in production
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
-                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
-                   "http://localhost:3000";
-    
-    console.log("[MegaMenu] Fetching from:", baseUrl);
-    
-    // Fetch navigation items
-    const navRes = await fetch(`${baseUrl}/api/navigation`, {
-      cache: 'no-store',
-    });
-    if (navRes.ok) {
-      navigation = await navRes.json();
-      console.log("[MegaMenu] Navigation fetched successfully");
-    } else {
-      console.error("[MegaMenu] Navigation fetch failed:", navRes.status);
-    }
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Fetch navigation items
+        const navRes = await fetch("/api/navigation");
+        if (navRes.ok) {
+          const navData = await navRes.json();
+          setNavigation(navData);
+        }
 
-    // Fetch admin-created categories
-    const catRes = await fetch(`${baseUrl}/api/categories`, {
-      cache: 'no-store',
-    });
-    if (catRes.ok) {
-      dbCategories = await catRes.json();
-      console.log("[MegaMenu] Categories fetched successfully");
-    } else {
-      console.error("[MegaMenu] Categories fetch failed:", catRes.status);
-    }
-  } catch (error) {
-    console.error("[MegaMenu] Failed to fetch data from DB, using static:", error);
-  }
+        // Fetch admin-created categories
+        const catRes = await fetch("/api/categories");
+        if (catRes.ok) {
+          const catData = await catRes.json();
+          setDbCategories(catData);
+        }
+      } catch (error) {
+        console.error("[MegaMenu] Failed to fetch data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   // Helper: Link admin categories to navigation items
   const enhancedNavigation = navigation.map((navItem) => {
