@@ -2393,23 +2393,64 @@ export default function AdminDashboard() {
                   </h3>
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Select Category</label>
+                      <select
+                        value={homepageCategoryFormData.categoryId || ""}
+                        onChange={(e) => {
+                          const selectedCat = categories.find(cat => cat._id === e.target.value);
+                          if (selectedCat) {
+                            setHomepageCategoryFormData({
+                              ...homepageCategoryFormData,
+                              categoryId: selectedCat._id,
+                              title: selectedCat.name,
+                              description: selectedCat.description || "",
+                              image: selectedCat.image || "",
+                              subcategories: [] // Will be populated from products
+                            });
+                          } else {
+                            setHomepageCategoryFormData({
+                              ...homepageCategoryFormData,
+                              categoryId: null,
+                              title: "",
+                              description: "",
+                              image: "",
+                              subcategories: []
+                            });
+                          }
+                        }}
+                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
+                      >
+                        <option value="">-- Select a category --</option>
+                        {categories.map((cat) => (
+                          <option key={cat._id} value={cat._id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">Choose from existing categories or leave blank to create custom</p>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Display Title (Optional Override)</label>
                       <input
                         type="text"
                         required
                         value={homepageCategoryFormData.title}
                         onChange={(e) => setHomepageCategoryFormData({...homepageCategoryFormData, title: e.target.value})}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
+                        placeholder="e.g., Men's Collection"
                       />
+                      <p className="text-xs text-gray-500 mt-1">This title will appear on the homepage</p>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Description (Tagline)</label>
                       <textarea
                         value={homepageCategoryFormData.description}
                         onChange={(e) => setHomepageCategoryFormData({...homepageCategoryFormData, description: e.target.value})}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
-                        rows={3}
+                        rows={2}
+                        placeholder="e.g., Eastern and western essentials"
                       />
+                      <p className="text-xs text-gray-500 mt-1">Short description shown below the title</p>
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
@@ -2424,6 +2465,69 @@ export default function AdminDashboard() {
                         <img src={homepageCategoryFormData.image} alt="Preview" className="mt-2 h-20 rounded border" onError={(e) => e.currentTarget.style.display = 'none'} />
                       )}
                     </div>
+                    
+                    {/* Subcategories Section */}
+                    <div className="border-t pt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Subcategory Links
+                        <span className="text-xs font-normal text-gray-500 ml-2">(Links shown in the category card)</span>
+                      </label>
+                      <div className="space-y-2 mb-3">
+                        {homepageCategoryFormData.subcategories.map((sub, idx) => (
+                          <div key={idx} className="flex gap-2 items-start bg-white p-2 rounded border">
+                            <div className="flex-1">
+                              <input
+                                type="text"
+                                value={sub.label}
+                                onChange={(e) => {
+                                  const newSubs = [...homepageCategoryFormData.subcategories];
+                                  newSubs[idx].label = e.target.value;
+                                  setHomepageCategoryFormData({...homepageCategoryFormData, subcategories: newSubs});
+                                }}
+                                placeholder="Label (e.g., Shalwar Kameez)"
+                                className="w-full px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-red-500 text-gray-900"
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <input
+                                type="text"
+                                value={sub.href}
+                                onChange={(e) => {
+                                  const newSubs = [...homepageCategoryFormData.subcategories];
+                                  newSubs[idx].href = e.target.value;
+                                  setHomepageCategoryFormData({...homepageCategoryFormData, subcategories: newSubs});
+                                }}
+                                placeholder="URL (e.g., /collections/mens-kameez)"
+                                className="w-full px-2 py-1 text-sm border rounded focus:ring-1 focus:ring-red-500 text-gray-900"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const newSubs = homepageCategoryFormData.subcategories.filter((_, i) => i !== idx);
+                                setHomepageCategoryFormData({...homepageCategoryFormData, subcategories: newSubs});
+                              }}
+                              className="px-2 py-1 text-sm bg-red-100 text-red-600 rounded hover:bg-red-200 transition"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setHomepageCategoryFormData({
+                            ...homepageCategoryFormData,
+                            subcategories: [...homepageCategoryFormData.subcategories, { label: "", href: "" }]
+                          });
+                        }}
+                        className="text-sm px-3 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 transition"
+                      >
+                        + Add Link
+                      </button>
+                    </div>
+                    
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Columns per Row</label>
                       <div className="flex gap-4">

@@ -2,6 +2,7 @@
 import Link from "next/link";
 import { Container } from "@/components/layout/Container";
 import { HeroCarousel } from "@/components/layout/HeroCarousel";
+import { CategoryCard } from "@/components/homepage/CategoryCard";
 import { getHeroSlidesCollection, connectToDatabase } from "@/lib/mongodb";
 
 type HeroSlide = {
@@ -105,38 +106,7 @@ export default async function HomePage() {
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {homepageCategories.map((category) => (
-                <div
-                  key={category._id}
-                  className="rounded-xl border-2 border-red-200 bg-white shadow-sm transition hover:border-red-600 hover:shadow-md"
-                >
-                  <div className="px-5 py-4 border-b border-red-100">
-                    {category.image && (
-                      <img 
-                        src={category.image} 
-                        alt={category.title} 
-                        className="w-full h-32 object-cover rounded-lg mb-3"
-                        onError={(e) => e.currentTarget.style.display = 'none'}
-                      />
-                    )}
-                    <div className="text-base font-semibold text-gray-900">{category.title}</div>
-                    <div className="text-xs text-gray-600">{category.description}</div>
-                  </div>
-                  <div className={`grid gap-2 px-5 py-4 ${
-                    category.columnsPerRow === 1 ? 'grid-cols-1' : 
-                    category.columnsPerRow === 3 ? 'grid-cols-1 sm:grid-cols-3' : 
-                    'grid-cols-1 sm:grid-cols-2'
-                  }`}>
-                    {category.subcategories.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        className="rounded-lg border border-red-100 bg-white px-3 py-2 text-sm font-medium text-gray-800 transition hover:border-red-500 hover:text-red-600 hover:shadow"
-                      >
-                        {link.label}
-                      </Link>
-                    ))}
-                  </div>
-                </div>
+                <CategoryCard key={category._id} category={category} />
               ))}
             </div>
           )}
