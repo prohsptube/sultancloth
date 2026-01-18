@@ -2029,6 +2029,56 @@ export default function AdminDashboard() {
                       className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500"
                     />
                   </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Header Display Mode</label>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                      <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:border-red-500 transition">
+                        <input
+                          type="radio"
+                          name="headerDisplay"
+                          value="logo-only"
+                          checked={settings.headerDisplay === "logo-only"}
+                          onChange={(e) => setSettings({...settings, headerDisplay: e.target.value})}
+                          className="text-red-600 focus:ring-red-500"
+                        />
+                        <span className="text-sm font-medium">Logo Only</span>
+                      </label>
+                      <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:border-red-500 transition">
+                        <input
+                          type="radio"
+                          name="headerDisplay"
+                          value="name-only"
+                          checked={settings.headerDisplay === "name-only"}
+                          onChange={(e) => setSettings({...settings, headerDisplay: e.target.value})}
+                          className="text-red-600 focus:ring-red-500"
+                        />
+                        <span className="text-sm font-medium">Name Only</span>
+                      </label>
+                      <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:border-red-500 transition">
+                        <input
+                          type="radio"
+                          name="headerDisplay"
+                          value="logo-and-name"
+                          checked={settings.headerDisplay === "logo-and-name"}
+                          onChange={(e) => setSettings({...settings, headerDisplay: e.target.value})}
+                          className="text-red-600 focus:ring-red-500"
+                        />
+                        <span className="text-sm font-medium">Logo + Name</span>
+                      </label>
+                      <label className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:border-red-500 transition">
+                        <input
+                          type="radio"
+                          name="headerDisplay"
+                          value="both-stacked"
+                          checked={settings.headerDisplay === "both-stacked"}
+                          onChange={(e) => setSettings({...settings, headerDisplay: e.target.value})}
+                          className="text-red-600 focus:ring-red-500"
+                        />
+                        <span className="text-sm font-medium">Stacked</span>
+                      </label>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-2">Choose how your brand appears in the header</p>
+                  </div>
                 </div>
               </div>
 

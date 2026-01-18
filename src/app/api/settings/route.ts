@@ -16,6 +16,7 @@ export async function GET(request: NextRequest) {
         storeName: "Sultan Tag",
         tagline: "Premium Stitched & Unstitched Clothing",
         logo: "/logo.png",
+        headerDisplay: "logo-and-name", // logo-only, name-only, logo-and-name, both-stacked
         email: "info@sultantag.com",
         phone: "+92 300 1234567",
         address: "Karachi, Pakistan",
