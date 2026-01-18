@@ -25,13 +25,16 @@ export function Header() {
     fetch("/api/settings")
       .then(res => res.json())
       .then(data => {
+        console.log("Fetched settings:", data);
         if (data) {
-          setSettings({
+          const newSettings = {
             storeName: data.storeName || "Sultan Tag",
             tagline: data.tagline || "Premium Stitched & Unstitched Clothing",
             logo: data.logo || "/sultan-logo.png",
             headerDisplay: data.headerDisplay || "logo-and-name"
-          });
+          };
+          console.log("Applying settings:", newSettings);
+          setSettings(newSettings);
         }
       })
       .catch(err => console.error("Failed to fetch settings:", err));

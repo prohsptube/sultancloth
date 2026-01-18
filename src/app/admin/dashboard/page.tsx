@@ -406,6 +406,7 @@ export default function AdminDashboard() {
       const res = await fetch("/api/settings");
       if (!res.ok) throw new Error("Failed to fetch settings");
       const data = await res.json();
+      console.log("[Admin] Fetched settings:", data);
       setSettings(data);
     } catch (err) {
       console.error("Error loading settings:", err);
@@ -415,6 +416,7 @@ export default function AdminDashboard() {
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      console.log("[Admin] Saving settings:", settings);
       const res = await fetch("/api/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -423,6 +425,7 @@ export default function AdminDashboard() {
       });
       if (res.ok) {
         alert("Settings saved successfully!");
+        console.log("[Admin] Settings saved successfully");
       } else {
         alert("Failed to save settings");
       }

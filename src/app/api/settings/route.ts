@@ -9,6 +9,8 @@ export async function GET(request: NextRequest) {
     
     let settings: any = await db.collection("site_settings").findOne({ type: "main" });
     
+    console.log("[API Settings GET] Found settings:", settings);
+    
     // Return default settings if none exist
     if (!settings) {
       settings = {
@@ -30,6 +32,7 @@ export async function GET(request: NextRequest) {
         freeShippingThreshold: 5000,
         updatedAt: new Date()
       };
+      console.log("[API Settings GET] No settings found, using defaults");
     }
 
     return NextResponse.json(settings);
@@ -49,6 +52,8 @@ export async function PUT(request: NextRequest) {
     if (authError) return authError;
 
     const body = await request.json();
+    console.log("[API Settings PUT] Received body:", body);
+    
     const { db } = await connectToDatabase();
 
     const updateData = {
@@ -57,12 +62,15 @@ export async function PUT(request: NextRequest) {
       updatedAt: new Date()
     };
 
+    console.log("[API Settings PUT] Saving to DB:", updateData);
+
     await db.collection("site_settings").updateOne(
       { type: "main" },
       { $set: updateData },
       { upsert: true }
     );
 
+    console.log("[API Settings PUT] Save successful");
     return NextResponse.json({ message: "Settings updated successfully" });
   } catch (error) {
     console.error("[API] PUT /api/settings error:", error);
