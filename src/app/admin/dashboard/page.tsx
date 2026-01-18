@@ -707,8 +707,8 @@ export default function AdminDashboard() {
       quantity: product.quantity?.toString() || "",
       sizes: product.sizes || [],
       sizeChart: product.sizeChart || "",
-      isFeatured: false,
-      stockQuantity: "",
+      isFeatured: product.isFeatured || false,
+      stockQuantity: product.stockQuantity?.toString() || product.quantity?.toString() || "",
     });
     setProductImagePreview(product.image || null);
     // Preselect category hierarchy based on slug
