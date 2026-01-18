@@ -584,6 +584,8 @@ export default function AdminDashboard() {
 
       if (response.ok) {
         await fetchOrders();
+        await fetchAnalytics(); // Refresh dashboard analytics
+        await fetchCustomers(); // Refresh customer data
       } else {
         setError("Error updating order status");
       }
@@ -603,6 +605,8 @@ export default function AdminDashboard() {
 
       if (response.ok) {
         await fetchOrders();
+        await fetchAnalytics(); // Refresh dashboard analytics
+        await fetchCustomers(); // Refresh customer data
       } else {
         setError("Error deleting order");
       }
@@ -678,6 +682,8 @@ export default function AdminDashboard() {
         setSelectedLevel3("");
         setProductImagePreview(null);
         await fetchProducts();
+        await fetchInventory(); // Refresh inventory stats
+        await fetchAnalytics(); // Refresh dashboard analytics
       } else {
         const data = await response.json();
         setError(data.error || "Error saving product");
@@ -728,6 +734,8 @@ export default function AdminDashboard() {
 
       if (response.ok) {
         setProducts(products.filter((p) => p._id !== id));
+        await fetchInventory(); // Refresh inventory stats
+        await fetchAnalytics(); // Refresh dashboard analytics
       } else {
         setError("Error deleting product");
       }
