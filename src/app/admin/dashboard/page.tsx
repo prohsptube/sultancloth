@@ -18,6 +18,8 @@ interface Product {
   quantity?: number;
   sizes?: string[]; // e.g., ["XS", "S", "M", "L", "XL", "XXL"]
   sizeChart?: string; // URL to size chart image
+  isFeatured?: boolean;
+  stockQuantity?: number;
 }
 
 interface Category {
