@@ -114,10 +114,13 @@ interface Customer {
   totalSpent: number;
   lastOrderDate: string;
   orders: {
+    _id: string;
     orderNumber: string;
-    total: number;
+    totalAmount: number;
     status: string;
-    date: string;
+    createdAt: string;
+    items: any[];
+    paymentStatus: string;
   }[];
 }
 
@@ -1369,7 +1372,7 @@ export default function AdminDashboard() {
                                 <div className="flex-1">
                                   <div className="flex items-center gap-4">
                                     <div className="text-sm font-medium text-gray-900">
-                                      Order #{order._id.slice(-8)}
+                                      Order #{order.orderNumber || order._id.slice(-8)}
                                     </div>
                                     <div className={`text-xs font-medium px-2 py-1 rounded ${
                                       order.status === 'delivered' ? 'bg-green-100 text-green-800' :
