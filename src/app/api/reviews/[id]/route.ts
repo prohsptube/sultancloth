@@ -5,10 +5,10 @@ import { ObjectId } from "mongodb";
 // Update review status (approve/reject) or add admin response
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const { status, adminResponse } = await request.json();
 
     if (!ObjectId.isValid(id)) {
@@ -45,10 +45,10 @@ export async function PUT(
 // Delete a review
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: "Invalid review ID" }, { status: 400 });
