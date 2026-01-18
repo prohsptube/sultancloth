@@ -1587,37 +1587,6 @@ export default function AdminDashboard() {
                   {navLoading ? "Seeding..." : "Seed Default Navigation"}
                 </button>
               )}
-
-              {navigationItems.length > 0 && (
-                <button
-                  onClick={async () => {
-                    if (!confirm("Clear ALL navigation items? This cannot be undone!")) return;
-                    try {
-                      setNavLoading(true);
-                      const response = await fetch("/api/navigation/clear", {
-                        method: "POST",
-                        credentials: "include",
-                      });
-                      if (response.ok) {
-                        const data = await response.json();
-                        console.log("Clear response:", data);
-                        await fetchNavigation();
-                        alert(data.message || "Navigation cleared!");
-                      } else {
-                        alert("Failed to clear navigation");
-                      }
-                    } catch (err) {
-                      alert("Error clearing navigation");
-                    } finally {
-                      setNavLoading(false);
-                    }
-                  }}
-                  className="bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-yellow-700 transition"
-                  disabled={navLoading}
-                >
-                  Clear All Navigation
-                </button>
-              )}
               
               {!showNavForm && (
                 <button
