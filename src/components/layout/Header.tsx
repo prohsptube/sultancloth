@@ -1,24 +1,119 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Search, ShoppingBag, User } from "lucide-react";
 import { MegaMenu } from "./MegaMenu";
+import { useState, useEffect } from "react";
+
+interface SiteSettings {
+  storeName: string;
+  tagline: string;
+  logo: string;
+  headerDisplay: "logo-only" | "name-only" | "logo-and-name" | "both-stacked";
+}
 
 export function Header() {
-  return (
-    <header className="sticky top-0 z-50 border-b-2 border-red-600 bg-white backdrop-blur supports-[backdrop-filter]:backdrop-blur-lg shadow-lg">
-      {/* TOP HEADER ROW - PROPER 3-COLUMN LAYOUT */}
-      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6 gap-4">
-        {/* LEFT: LOGO - Bigger */}
-        <Link href="/" className="flex items-center flex-shrink-0">
+  const [settings, setSettings] = useState<SiteSettings>({
+    storeName: "Sultan Tag",
+    tagline: "Premium Stitched & Unstitched Clothing",
+    logo: "/sultan-logo.png",
+    headerDisplay: "logo-and-name"
+  });
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then(res => res.json())
+      .then(data => {
+        if (data) {
+          setSettings({
+            storeName: data.storeName || "Sultan Tag",
+            tagline: data.tagline || "Premium Stitched & Unstitched Clothing",
+            logo: data.logo || "/sultan-logo.png",
+            headerDisplay: data.headerDisplay || "logo-and-name"
+          });
+        }
+      })
+      .catch(err => console.error("Failed to fetch settings:", err));
+  }, []);
+
+  const renderBrandContent = () => {
+    switch (settings.headerDisplay) {
+      case "logo-only":
+        return (
           <div className="relative h-14 w-48 md:h-16 md:w-64">
             <Image
-              src="/sultan-logo.png"
-              alt="Sultan Tag"
+              src={settings.logo}
+              alt={settings.storeName}
               fill
               className="object-contain drop-shadow-[0_2px_6px_rgba(220,38,38,0.25)]"
               priority
             />
           </div>
+        );
+      
+      case "name-only":
+        return (
+          <div className="flex flex-col">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 drop-shadow-sm">
+              {settings.storeName}
+            </h1>
+            <p className="text-xs text-gray-600 hidden md:block">{settings.tagline}</p>
+          </div>
+        );
+      
+      case "both-stacked":
+        return (
+          <div className="flex flex-col items-center gap-1">
+            <div className="relative h-12 w-32 md:h-14 md:w-40">
+              <Image
+                src={settings.logo}
+                alt={settings.storeName}
+                fill
+                className="object-contain drop-shadow-[0_2px_6px_rgba(220,38,38,0.25)]"
+                priority
+              />
+            </div>
+            <div className="text-center">
+              <h1 className="text-lg md:text-xl font-bold text-gray-900">
+                {settings.storeName}
+              </h1>
+              <p className="text-xs text-gray-600 hidden md:block">{settings.tagline}</p>
+            </div>
+          </div>
+        );
+      
+      case "logo-and-name":
+      default:
+        return (
+          <div className="flex items-center gap-3">
+            <div className="relative h-12 w-12 md:h-14 md:w-14 flex-shrink-0">
+              <Image
+                src={settings.logo}
+                alt={settings.storeName}
+                fill
+                className="object-contain drop-shadow-[0_2px_6px_rgba(220,38,38,0.25)]"
+                priority
+              />
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900 leading-tight">
+                {settings.storeName}
+              </h1>
+              <p className="text-xs text-gray-600 hidden md:block">{settings.tagline}</p>
+            </div>
+          </div>
+        );
+    }
+  };
+
+  return (
+    <header className="sticky top-0 z-50 border-b-2 border-red-600 bg-white backdrop-blur supports-[backdrop-filter]:backdrop-blur-lg shadow-lg">
+      {/* TOP HEADER ROW - PROPER 3-COLUMN LAYOUT */}
+      <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 md:px-6 gap-4">
+        {/* LEFT: LOGO/BRAND */}
+        <Link href="/" className="flex items-center flex-shrink-0">
+          {renderBrandContent()}
         </Link>
 
         {/* CENTER: SEARCH BAR */}
