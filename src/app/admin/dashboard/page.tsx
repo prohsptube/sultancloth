@@ -582,6 +582,8 @@ export default function AdminDashboard() {
       quantity: product.quantity?.toString() || "",
       sizes: product.sizes || [],
       sizeChart: product.sizeChart || "",
+      isFeatured: false,
+      stockQuantity: "",
     });
     setProductImagePreview(product.image || null);
     // Preselect category hierarchy based on slug
