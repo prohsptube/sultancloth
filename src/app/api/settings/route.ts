@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const { db } = await connectToDatabase();
     
-    let settings = await db.collection("site_settings").findOne({ type: "main" });
+    let settings: any = await db.collection("site_settings").findOne({ type: "main" });
     
     // Return default settings if none exist
     if (!settings) {
