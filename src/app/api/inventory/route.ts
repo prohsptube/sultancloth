@@ -31,29 +31,40 @@ export async function GET(request: NextRequest) {
       .sort({ stockQuantity: 1 })
       .toArray();
 
+    // Debug: Check what stockQuantity values look like
+    console.log("[INVENTORY] Sample product:", products[0]);
+    console.log("[INVENTORY] StockQuantity type:", typeof products[0]?.stockQuantity);
+
     // Get overall stats
     const stats = await db.collection("products").aggregate([
+      {
+        $addFields: {
+          stockQuantity: { $ifNull: ["$stockQuantity", 0] }
+        }
+      },
       {
         $group: {
           _id: null,
           totalProducts: { $sum: 1 },
-          totalStock: { $sum: { $ifNull: ["$stockQuantity", 0] } },
+          totalStock: { $sum: { $toInt: { $ifNull: ["$stockQuantity", 0] } } },
           lowStockCount: {
             $sum: {
               $cond: [
-                { $and: [{ $gt: [{ $ifNull: ["$stockQuantity", 0] }, 0] }, { $lte: [{ $ifNull: ["$stockQuantity", 0] }, 10] }] },
+                { $and: [{ $gt: [{ $toInt: { $ifNull: ["$stockQuantity", 0] } }, 0] }, { $lte: [{ $toInt: { $ifNull: ["$stockQuantity", 0] } }, 10] }] },
                 1,
                 0
               ]
             }
           },
           outOfStockCount: {
-            $sum: { $cond: [{ $eq: [{ $ifNull: ["$stockQuantity", 0] }, 0] }, 1, 0] }
+            $sum: { $cond: [{ $eq: [{ $toInt: { $ifNull: ["$stockQuantity", 0] } }, 0] }, 1, 0] }
           },
-          averageStock: { $avg: { $ifNull: ["$stockQuantity", 0] } }
+          averageStock: { $avg: { $toInt: { $ifNull: ["$stockQuantity", 0] } } }
         }
       }
     ]).toArray();
+
+    console.log("[INVENTORY] Stats result:", stats[0]);
 
     return NextResponse.json({
       products,
