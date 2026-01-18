@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
       name: body.name,
       slug: body.slug,
       description: body.description || "",
+      image: body.image || "",
       parentId: body.parentId || null,
       createdAt: new Date(),
       updatedAt: new Date(),

@@ -27,6 +27,7 @@ interface Category {
   name: string;
   slug: string;
   description?: string;
+  image?: string;
   parentId?: string | null;
 }
 
@@ -196,6 +197,7 @@ export default function AdminDashboard() {
     name: "",
     slug: "",
     description: "",
+    image: "",
     parentId: null as string | null,
   });
   const [selectedMainCategory, setSelectedMainCategory] = useState("");
@@ -1045,13 +1047,14 @@ export default function AdminDashboard() {
       name: category.name,
       slug: category.slug,
       description: category.description || "",
-       parentId: category.parentId || null,
-     });
-     if (category.parentId) {
-       setSelectedMainCategory(category.parentId);
-     }
-     setShowCategoryForm(true);
-   };
+      image: category.image || "",
+      parentId: category.parentId || null,
+    });
+    if (category.parentId) {
+      setSelectedMainCategory(category.parentId);
+    }
+    setShowCategoryForm(true);
+  };
 
   const handleDeleteCategory = async (id: string) => {
     if (!confirm("Delete this category?")) return;
@@ -1075,7 +1078,7 @@ export default function AdminDashboard() {
   const handleCancelCategoryForm = () => {
     setShowCategoryForm(false);
     setEditingCategoryId(null);
-    setCategoryFormData({ name: "", slug: "", description: "", parentId: null });
+    setCategoryFormData({ name: "", slug: "", description: "", image: "", parentId: null });
     setSelectedMainCategory("");
     setSelectedSubCategory("");
   };
@@ -2967,6 +2970,32 @@ export default function AdminDashboard() {
                       rows={3}
                       className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
                     />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Image URL
+                    </label>
+                    <input
+                      type="text"
+                      value={categoryFormData.image}
+                      onChange={(e) =>
+                        setCategoryFormData({ ...categoryFormData, image: e.target.value })
+                      }
+                      placeholder="https://example.com/image.jpg or /images/category.jpg"
+                      className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800 text-gray-900"
+                    />
+                    {categoryFormData.image && (
+                      <img 
+                        src={categoryFormData.image} 
+                        alt="Preview" 
+                        className="mt-2 h-32 w-32 object-cover rounded-lg border-2 border-gray-200"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                        }}
+                      />
+                    )}
                   </div>
 
                   <div className="flex gap-3">
