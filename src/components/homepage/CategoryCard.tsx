@@ -19,32 +19,40 @@ type CategoryCardProps = {
 };
 
 export function CategoryCard({ category }: CategoryCardProps) {
+  // Only show first 4 subcategories
+  const displayedSubcategories = category.subcategories.slice(0, 4);
+  
   return (
-    <div className="rounded-xl border-2 border-red-200 bg-white shadow-sm transition hover:border-red-600 hover:shadow-md">
-      <div className="px-5 py-4 border-b border-red-100">
-        {category.image && (
+    <div className="rounded-xl border-2 border-red-200 bg-white shadow-sm transition hover:border-red-600 hover:shadow-md overflow-hidden">
+      {/* Large Category Image */}
+      {category.image && (
+        <div className="relative w-full h-64 sm:h-72 md:h-80 overflow-hidden">
           <img 
             src={category.image} 
             alt={category.title} 
-            className="w-full h-32 object-cover rounded-lg mb-3"
+            className="w-full h-full object-cover"
             onError={(e) => {
               e.currentTarget.style.display = 'none';
             }}
           />
+        </div>
+      )}
+      
+      {/* Title and Description */}
+      <div className="px-5 py-4 border-b border-red-100">
+        <h3 className="text-xl font-bold text-gray-900 mb-1">{category.title}</h3>
+        {category.description && (
+          <p className="text-sm text-gray-600">{category.description}</p>
         )}
-        <div className="text-base font-semibold text-gray-900">{category.title}</div>
-        <div className="text-xs text-gray-600">{category.description}</div>
       </div>
-      <div className={`grid gap-2 px-5 py-4 ${
-        category.columnsPerRow === 1 ? 'grid-cols-1' : 
-        category.columnsPerRow === 3 ? 'grid-cols-1 sm:grid-cols-3' : 
-        'grid-cols-1 sm:grid-cols-2'
-      }`}>
-        {category.subcategories.map((link, idx) => (
+      
+      {/* Subcategory Links - Always 2x2 grid for 4 items */}
+      <div className="grid grid-cols-2 gap-2 px-5 py-4">
+        {displayedSubcategories.map((link, idx) => (
           <Link
             key={`${link.href}-${idx}`}
             href={link.href}
-            className="rounded-lg border border-red-100 bg-white px-3 py-2 text-sm font-medium text-gray-800 transition hover:border-red-500 hover:text-red-600 hover:shadow"
+            className="rounded-lg border border-red-100 bg-white px-3 py-2.5 text-sm font-medium text-gray-800 text-center transition hover:border-red-500 hover:text-red-600 hover:shadow"
           >
             {link.label}
           </Link>
