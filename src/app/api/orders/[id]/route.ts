@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOrdersCollection } from "@/lib/mongodb";
+import { getOrdersCollection, connectToDatabase } from "@/lib/mongodb";
 import { checkAdminAuth } from "@/lib/auth";
 import { ObjectId } from "mongodb";
 
@@ -14,6 +14,26 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     const { id } = await params;
     const body = await request.json();
     const ordersCollection = await getOrdersCollection();
+    const { db } = await connectToDatabase();
+
+    // Get current order to check if being cancelled
+    const currentOrder = await ordersCollection.findOne({ _id: new ObjectId(id) });
+    if (!currentOrder) {
+      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    // If changing status to cancelled, restore stock
+    if (body.status === 'cancelled' && currentOrder.status !== 'cancelled') {
+      for (const item of currentOrder.items) {
+        await db.collection("products").updateOne(
+          { _id: new ObjectId(item.productId) },
+          { 
+            $inc: { stockQuantity: item.quantity },
+            $set: { updatedAt: new Date() }
+          }
+        );
+      }
+    }
 
     const updateData: any = {
       updatedAt: new Date(),
@@ -27,10 +47,6 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
       { _id: new ObjectId(id) },
       { $set: updateData }
     );
-
-    if (result.matchedCount === 0) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
-    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -50,11 +66,26 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
 
     const { id } = await params;
     const ordersCollection = await getOrdersCollection();
-    const result = await ordersCollection.deleteOne({ _id: new ObjectId(id) });
+    const { db } = await connectToDatabase();
 
-    if (result.deletedCount === 0) {
+    // Get order to restore stock
+    const order = await ordersCollection.findOne({ _id: new ObjectId(id) });
+    if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
+
+    // Restore stock for all items in the order
+    for (const item of order.items) {
+      await db.collection("products").updateOne(
+        { _id: new ObjectId(item.productId) },
+        { 
+          $inc: { stockQuantity: item.quantity },
+          $set: { updatedAt: new Date() }
+        }
+      );
+    }
+
+    const result = await ordersCollection.deleteOne({ _id: new ObjectId(id) });
 
     return NextResponse.json({ success: true });
   } catch (error) {

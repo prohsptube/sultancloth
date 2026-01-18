@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getOrdersCollection } from "@/lib/mongodb";
+import { getOrdersCollection, connectToDatabase } from "@/lib/mongodb";
 import { checkAdminAuth } from "@/lib/auth";
+import { ObjectId } from "mongodb";
 
 // GET - Fetch all orders
 export async function GET(request: NextRequest) {
@@ -26,6 +27,38 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const ordersCollection = await getOrdersCollection();
+    const { db } = await connectToDatabase();
+
+    // Validate and deduct stock for each item
+    for (const item of body.items) {
+      const product = await db.collection("products").findOne({
+        _id: new ObjectId(item.productId)
+      });
+
+      if (!product) {
+        return NextResponse.json(
+          { error: `Product ${item.name} not found` },
+          { status: 400 }
+        );
+      }
+
+      const currentStock = product.stockQuantity || 0;
+      if (currentStock < item.quantity) {
+        return NextResponse.json(
+          { error: `Insufficient stock for ${item.name}. Available: ${currentStock}, Requested: ${item.quantity}` },
+          { status: 400 }
+        );
+      }
+
+      // Deduct stock
+      await db.collection("products").updateOne(
+        { _id: new ObjectId(item.productId) },
+        { 
+          $inc: { stockQuantity: -item.quantity },
+          $set: { updatedAt: new Date() }
+        }
+      );
+    }
 
     const orderData = {
       orderNumber: `ORD-${Date.now()}`,
