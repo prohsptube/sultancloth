@@ -27,10 +27,12 @@ export function Footer() {
   });
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then(res => res.json())
-      .then(data => {
-        if (data) {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch("/api/settings");
+        const data = await res.json();
+        console.log("[Footer] Fetched settings:", data);
+        if (data && !data.error) {
           setSettings({
             storeName: data.storeName || "Sultan Tag",
             email: data.email || "info@sultantag.com",
@@ -41,8 +43,12 @@ export function Footer() {
             twitter: data.twitter || ""
           });
         }
-      })
-      .catch(err => console.error("Failed to fetch settings:", err));
+      } catch (err) {
+        console.error("[Footer] Failed to fetch settings:", err);
+      }
+    };
+    
+    fetchSettings();
   }, []);
 
   return (

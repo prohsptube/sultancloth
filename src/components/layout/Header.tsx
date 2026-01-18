@@ -20,24 +20,32 @@ export function Header() {
     logo: "/sultan-logo.png",
     headerDisplay: "logo-and-name"
   });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/settings")
-      .then(res => res.json())
-      .then(data => {
-        console.log("Fetched settings:", data);
-        if (data) {
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch("/api/settings");
+        const data = await res.json();
+        console.log("[Header] Fetched settings:", data);
+        if (data && !data.error) {
           const newSettings = {
             storeName: data.storeName || "Sultan Tag",
             tagline: data.tagline || "Premium Stitched & Unstitched Clothing",
             logo: data.logo || "/sultan-logo.png",
             headerDisplay: data.headerDisplay || "logo-and-name"
           };
-          console.log("Applying settings:", newSettings);
+          console.log("[Header] Applying settings:", newSettings);
           setSettings(newSettings);
         }
-      })
-      .catch(err => console.error("Failed to fetch settings:", err));
+      } catch (err) {
+        console.error("[Header] Failed to fetch settings:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchSettings();
   }, []);
 
   const renderBrandContent = () => {

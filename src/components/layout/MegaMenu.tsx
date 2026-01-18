@@ -32,22 +32,33 @@ export async function MegaMenu() {
   let dbCategories: DBCategory[] = [];
 
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    // Use relative URLs for server-side fetching in production
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+                   (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "") ||
+                   "http://localhost:3000";
+    
+    console.log("[MegaMenu] Fetching from:", baseUrl);
     
     // Fetch navigation items
     const navRes = await fetch(`${baseUrl}/api/navigation`, {
-      next: { revalidate: 3600 },
+      cache: 'no-store',
     });
     if (navRes.ok) {
       navigation = await navRes.json();
+      console.log("[MegaMenu] Navigation fetched successfully");
+    } else {
+      console.error("[MegaMenu] Navigation fetch failed:", navRes.status);
     }
 
     // Fetch admin-created categories
     const catRes = await fetch(`${baseUrl}/api/categories`, {
-      next: { revalidate: 3600 },
+      cache: 'no-store',
     });
     if (catRes.ok) {
       dbCategories = await catRes.json();
+      console.log("[MegaMenu] Categories fetched successfully");
+    } else {
+      console.error("[MegaMenu] Categories fetch failed:", catRes.status);
     }
   } catch (error) {
     console.error("[MegaMenu] Failed to fetch data from DB, using static:", error);
