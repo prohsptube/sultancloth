@@ -144,7 +144,7 @@ interface Analytics {
 }
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "categories" | "hero" | "navigation" | "orders" | "coupons" | "customers">("dashboard");
+  const [activeTab, setActiveTab] = useState<"dashboard" | "products" | "categories" | "hero" | "navigation" | "orders" | "coupons" | "customers" | "reviews" | "inventory" | "reports" | "shipping">("dashboard");
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([]);
@@ -153,6 +153,10 @@ export default function AdminDashboard() {
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [reviews, setReviews] = useState<any[]>([]);
+  const [inventory, setInventory] = useState<any>(null);
+  const [reportData, setReportData] = useState<any>(null);
+  const [shippingMethods, setShippingMethods] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [heroLoading, setHeroLoading] = useState(false);
   const [navLoading, setNavLoading] = useState(false);
@@ -236,6 +240,10 @@ export default function AdminDashboard() {
     fetchOrders();
     fetchCoupons();
     fetchCustomers();
+    fetchReviews();
+    fetchInventory();
+    fetchReports();
+    fetchShipping();
   }, []);
 
   const fetchProducts = async () => {
@@ -339,6 +347,53 @@ export default function AdminDashboard() {
       setCustomers(data);
     } catch (err) {
       console.error("Error loading customers:", err);
+    }
+  };
+
+  const fetchReviews = async () => {
+    try {
+      const res = await fetch("/api/reviews?all=true", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch reviews");
+      const data = await res.json();
+      setReviews(data);
+    } catch (err) {
+      console.error("Error loading reviews:", err);
+    }
+  };
+
+  const fetchInventory = async () => {
+    try {
+      const res = await fetch("/api/inventory", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch inventory");
+      const data = await res.json();
+      setInventory(data);
+    } catch (err) {
+      console.error("Error loading inventory:", err);
+    }
+  };
+
+  const fetchReports = async (startDate?: string, endDate?: string) => {
+    try {
+      const params = new URLSearchParams();
+      if (startDate) params.append("startDate", startDate);
+      if (endDate) params.append("endDate", endDate);
+      const res = await fetch(`/api/reports?${params}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch reports");
+      const data = await res.json();
+      setReportData(data);
+    } catch (err) {
+      console.error("Error loading reports:", err);
+    }
+  };
+
+  const fetchShipping = async () => {
+    try {
+      const res = await fetch("/api/shipping", { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch shipping methods");
+      const data = await res.json();
+      setShippingMethods(data);
+    } catch (err) {
+      console.error("Error loading shipping methods:", err);
     }
   };
 
@@ -1097,6 +1152,46 @@ export default function AdminDashboard() {
           >
             Customers
           </button>
+          <button
+            onClick={() => setActiveTab("reviews")}
+            className={`px-4 py-2 font-medium transition whitespace-nowrap ${
+              activeTab === "reviews"
+                ? "text-red-600 border-b-2 border-red-600"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Reviews
+          </button>
+          <button
+            onClick={() => setActiveTab("inventory")}
+            className={`px-4 py-2 font-medium transition whitespace-nowrap ${
+              activeTab === "inventory"
+                ? "text-red-600 border-b-2 border-red-600"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Inventory
+          </button>
+          <button
+            onClick={() => setActiveTab("reports")}
+            className={`px-4 py-2 font-medium transition whitespace-nowrap ${
+              activeTab === "reports"
+                ? "text-red-600 border-b-2 border-red-600"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Reports
+          </button>
+          <button
+            onClick={() => setActiveTab("shipping")}
+            className={`px-4 py-2 font-medium transition whitespace-nowrap ${
+              activeTab === "shipping"
+                ? "text-red-600 border-b-2 border-red-600"
+                : "text-gray-600 hover:text-gray-800"
+            }`}
+          >
+            Shipping
+          </button>
         </div>
 
         {/* DASHBOARD TAB */}
@@ -1410,6 +1505,435 @@ export default function AdminDashboard() {
                 </svg>
                 <h3 className="mt-2 text-sm font-medium text-gray-900">No customers yet</h3>
                 <p className="mt-1 text-sm text-gray-500">Customers will appear here once orders are placed.</p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* REVIEWS TAB */}
+        {activeTab === "reviews" && (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">Product Reviews Management</h2>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => fetchReviews()}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+                >
+                  Refresh
+                </button>
+              </div>
+            </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="bg-yellow-50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-yellow-600">
+                  {reviews.filter(r => r.status === 'pending').length}
+                </div>
+                <div className="text-sm text-gray-600">Pending Reviews</div>
+              </div>
+              <div className="bg-green-50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-green-600">
+                  {reviews.filter(r => r.status === 'approved').length}
+                </div>
+                <div className="text-sm text-gray-600">Approved</div>
+              </div>
+              <div className="bg-red-50 rounded-lg p-4">
+                <div className="text-2xl font-bold text-red-600">
+                  {reviews.filter(r => r.status === 'rejected').length}
+                </div>
+                <div className="text-sm text-gray-600">Rejected</div>
+              </div>
+            </div>
+
+            {/* Reviews List */}
+            <div className="space-y-4">
+              {reviews.map((review) => (
+                <div key={review._id} className="border rounded-lg p-4">
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="flex">
+                          {[...Array(5)].map((_, i) => (
+                            <svg
+                              key={i}
+                              className={`w-4 h-4 ${i < review.rating ? 'text-yellow-400' : 'text-gray-300'}`}
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                          ))}
+                        </div>
+                        <span className={`text-xs px-2 py-1 rounded font-medium ${
+                          review.status === 'approved' ? 'bg-green-100 text-green-800' :
+                          review.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {review.status.toUpperCase()}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-gray-900">{review.title}</h3>
+                      <p className="text-gray-600 mt-1">{review.comment}</p>
+                      <div className="text-sm text-gray-500 mt-2">
+                        By {review.visitorName} • {new Date(review.createdAt).toLocaleDateString()}
+                      </div>
+                      {review.product && (
+                        <div className="text-sm text-blue-600 mt-1">
+                          Product: {review.product.name}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2 ml-4">
+                      {review.status === 'pending' && (
+                        <>
+                          <button
+                            onClick={async () => {
+                              await fetch(`/api/reviews/${review._id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ status: 'approved' })
+                              });
+                              fetchReviews();
+                            }}
+                            className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm"
+                          >
+                            Approve
+                          </button>
+                          <button
+                            onClick={async () => {
+                              await fetch(`/api/reviews/${review._id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ status: 'rejected' })
+                              });
+                              fetchReviews();
+                            }}
+                            className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                          >
+                            Reject
+                          </button>
+                        </>
+                      )}
+                      <button
+                        onClick={async () => {
+                          if (confirm('Delete this review?')) {
+                            await fetch(`/api/reviews/${review._id}`, { method: 'DELETE' });
+                            fetchReviews();
+                          }
+                        }}
+                        className="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {reviews.length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                No reviews yet
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* INVENTORY TAB */}
+        {activeTab === "inventory" && (
+          <div className="space-y-6">
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">Inventory Management</h2>
+              
+              {/* Stats */}
+              {inventory && (
+                <div className="grid grid-cols-4 gap-4 mb-6">
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <div className="text-2xl font-bold text-blue-600">{inventory.stats.totalProducts}</div>
+                    <div className="text-sm text-gray-600">Total Products</div>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-4">
+                    <div className="text-2xl font-bold text-green-600">{inventory.stats.totalStock}</div>
+                    <div className="text-sm text-gray-600">Total Stock</div>
+                  </div>
+                  <div className="bg-yellow-50 rounded-lg p-4">
+                    <div className="text-2xl font-bold text-yellow-600">{inventory.stats.lowStockCount}</div>
+                    <div className="text-sm text-gray-600">Low Stock</div>
+                  </div>
+                  <div className="bg-red-50 rounded-lg p-4">
+                    <div className="text-2xl font-bold text-red-600">{inventory.stats.outOfStockCount}</div>
+                    <div className="text-sm text-gray-600">Out of Stock</div>
+                  </div>
+                </div>
+              )}
+
+              {/* Filter Buttons */}
+              <div className="flex gap-2 mb-6">
+                <button
+                  onClick={() => fetchInventory()}
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  All Products
+                </button>
+                <button
+                  onClick={async () => {
+                    const res = await fetch('/api/inventory?alert=low-stock');
+                    const data = await res.json();
+                    setInventory(data);
+                  }}
+                  className="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600"
+                >
+                  Low Stock Only
+                </button>
+                <button
+                  onClick={async () => {
+                    const res = await fetch('/api/inventory?alert=out-of-stock');
+                    const data = await res.json();
+                    setInventory(data);
+                  }}
+                  className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+                >
+                  Out of Stock
+                </button>
+              </div>
+
+              {/* Products Table */}
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Price</th>
+                      <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {inventory?.products.map((product: any) => (
+                      <tr key={product._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-medium text-gray-900">{product.name}</div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-500">{product.sku || 'N/A'}</td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm font-bold text-gray-900">{product.stockQuantity}</div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-900">Rs. {product.price.toLocaleString()}</td>
+                        <td className="px-6 py-4">
+                          <span className={`px-2 py-1 text-xs font-medium rounded ${
+                            product.stockQuantity === 0 ? 'bg-red-100 text-red-800' :
+                            product.stockQuantity <= 10 ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-green-100 text-green-800'
+                          }`}>
+                            {product.stockQuantity === 0 ? 'Out of Stock' :
+                             product.stockQuantity <= 10 ? 'Low Stock' : 'In Stock'}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* REPORTS TAB */}
+        {activeTab === "reports" && (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <h2 className="text-2xl font-bold text-gray-800 mb-6">Sales Reports</h2>
+
+            {/* Date Range Filter */}
+            <div className="flex gap-4 mb-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Start Date</label>
+                <input
+                  type="date"
+                  id="reportStartDate"
+                  className="px-4 py-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">End Date</label>
+                <input
+                  type="date"
+                  id="reportEndDate"
+                  className="px-4 py-2 border rounded"
+                />
+              </div>
+              <div className="flex items-end gap-2">
+                <button
+                  onClick={() => {
+                    const start = (document.getElementById('reportStartDate') as HTMLInputElement)?.value;
+                    const end = (document.getElementById('reportEndDate') as HTMLInputElement)?.value;
+                    fetchReports(start, end);
+                  }}
+                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                >
+                  Generate Report
+                </button>
+                <button
+                  onClick={() => {
+                    const start = (document.getElementById('reportStartDate') as HTMLInputElement)?.value;
+                    const end = (document.getElementById('reportEndDate') as HTMLInputElement)?.value;
+                    const params = new URLSearchParams();
+                    if (start) params.append('startDate', start);
+                    if (end) params.append('endDate', end);
+                    params.append('export', 'csv');
+                    window.open(`/api/reports?${params}`, '_blank');
+                  }}
+                  className="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600"
+                >
+                  Export CSV
+                </button>
+              </div>
+            </div>
+
+            {reportData && (
+              <div className="space-y-6">
+                {/* Summary Cards */}
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="bg-blue-50 rounded-lg p-4">
+                    <div className="text-2xl font-bold text-blue-600">Rs. {reportData.summary.totalRevenue.toLocaleString()}</div>
+                    <div className="text-sm text-gray-600">Total Revenue</div>
+                  </div>
+                  <div className="bg-green-50 rounded-lg p-4">
+                    <div className="text-2xl font-bold text-green-600">{reportData.summary.totalOrders}</div>
+                    <div className="text-sm text-gray-600">Total Orders</div>
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-4">
+                    <div className="text-2xl font-bold text-purple-600">Rs. {Math.round(reportData.summary.averageOrderValue).toLocaleString()}</div>
+                    <div className="text-sm text-gray-600">Avg Order Value</div>
+                  </div>
+                  <div className="bg-orange-50 rounded-lg p-4">
+                    <div className="text-2xl font-bold text-orange-600">{reportData.summary.totalItems}</div>
+                    <div className="text-sm text-gray-600">Items Sold</div>
+                  </div>
+                </div>
+
+                {/* Revenue by Category */}
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-bold text-lg mb-3">Revenue by Category</h3>
+                  <div className="space-y-2">
+                    {reportData.revenueByCategory.map((cat: any) => (
+                      <div key={cat._id} className="flex justify-between items-center">
+                        <span className="text-gray-700">{cat._id}</span>
+                        <span className="font-bold text-gray-900">Rs. {cat.revenue.toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Top Products */}
+                <div className="border rounded-lg p-4">
+                  <h3 className="font-bold text-lg mb-3">Top 10 Products</h3>
+                  <div className="space-y-2">
+                    {reportData.topProducts.map((product: any, idx: number) => (
+                      <div key={product._id} className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-blue-600">{idx + 1}.</span>
+                          <span className="text-gray-700">{product.productName}</span>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-gray-900">Rs. {product.totalRevenue.toLocaleString()}</div>
+                          <div className="text-sm text-gray-500">{product.totalQuantity} sold</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {!reportData && (
+              <div className="text-center py-12 text-gray-500">
+                Select date range and click Generate Report
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* SHIPPING TAB */}
+        {activeTab === "shipping" && (
+          <div className="bg-white rounded-lg shadow-md p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-gray-800">Shipping Methods</h2>
+              <button
+                onClick={async () => {
+                  const name = prompt('Shipping Method Name:');
+                  const cost = prompt('Cost (Rs):');
+                  if (name && cost) {
+                    await fetch('/api/shipping', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ name, cost: Number(cost), isActive: true })
+                    });
+                    fetchShipping();
+                  }
+                }}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Add Shipping Method
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              {shippingMethods.map((method) => (
+                <div key={method._id} className="border rounded-lg p-4 flex justify-between items-center">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-3">
+                      <h3 className="font-bold text-lg text-gray-900">{method.name}</h3>
+                      <span className={`px-2 py-1 text-xs font-medium rounded ${
+                        method.isActive ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {method.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
+                    <p className="text-gray-600 mt-1">{method.description}</p>
+                    <div className="flex gap-4 mt-2 text-sm text-gray-500">
+                      <span>Cost: Rs. {method.cost}</span>
+                      <span>Est. Delivery: {method.estimatedDays} days</span>
+                      {method.freeShippingThreshold && (
+                        <span>Free shipping over Rs. {method.freeShippingThreshold}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        await fetch(`/api/shipping/${method._id}`, {
+                          method: 'PUT',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ isActive: !method.isActive })
+                        });
+                        fetchShipping();
+                      }}
+                      className="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm"
+                    >
+                      Toggle
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (confirm('Delete this shipping method?')) {
+                          await fetch(`/api/shipping/${method._id}`, { method: 'DELETE' });
+                          fetchShipping();
+                        }
+                      }}
+                      className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {shippingMethods.length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                No shipping methods configured
               </div>
             )}
           </div>
