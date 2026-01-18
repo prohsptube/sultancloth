@@ -7,12 +7,12 @@ export async function GET(request: NextRequest) {
   try {
     const { db } = await connectToDatabase();
     
-    let settings = await db.collection("site_settings").findOne({ _id: "main" });
+    let settings = await db.collection("site_settings").findOne({ type: "main" });
     
     // Return default settings if none exist
     if (!settings) {
       settings = {
-        _id: "main",
+        type: "main",
         storeName: "Sultan Tag",
         tagline: "Premium Stitched & Unstitched Clothing",
         logo: "/logo.png",
@@ -53,12 +53,12 @@ export async function PUT(request: NextRequest) {
 
     const updateData = {
       ...body,
-      _id: "main",
+      type: "main",
       updatedAt: new Date()
     };
 
     await db.collection("site_settings").updateOne(
-      { _id: "main" },
+      { type: "main" },
       { $set: updateData },
       { upsert: true }
     );
