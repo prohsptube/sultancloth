@@ -423,14 +423,20 @@ export default function AdminDashboard() {
         credentials: "include",
         body: JSON.stringify(settings)
       });
+      
+      const data = await res.json();
+      console.log("[Admin] Response:", res.status, data);
+      
       if (res.ok) {
         alert("Settings saved successfully!");
         console.log("[Admin] Settings saved successfully");
       } else {
-        alert("Failed to save settings");
+        alert(`Failed to save settings: ${data.error || res.statusText}`);
+        console.error("[Admin] Save failed:", data);
       }
     } catch (err) {
-      alert("Error saving settings");
+      console.error("[Admin] Error saving settings:", err);
+      alert("Error saving settings: " + err);
     }
   };
 

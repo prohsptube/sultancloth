@@ -48,13 +48,20 @@ export async function GET(request: NextRequest) {
 // PUT - Update site settings
 export async function PUT(request: NextRequest) {
   try {
+    console.log("[API Settings PUT] Request received");
+    
     const authError = checkAdminAuth(request);
-    if (authError) return authError;
+    if (authError) {
+      console.log("[API Settings PUT] Auth failed");
+      return authError;
+    }
+    console.log("[API Settings PUT] Auth passed");
 
     const body = await request.json();
     console.log("[API Settings PUT] Received body:", body);
     
     const { db } = await connectToDatabase();
+    console.log("[API Settings PUT] DB connected");
 
     const updateData = {
       ...body,
@@ -64,13 +71,13 @@ export async function PUT(request: NextRequest) {
 
     console.log("[API Settings PUT] Saving to DB:", updateData);
 
-    await db.collection("site_settings").updateOne(
+    const result = await db.collection("site_settings").updateOne(
       { type: "main" },
       { $set: updateData },
       { upsert: true }
     );
 
-    console.log("[API Settings PUT] Save successful");
+    console.log("[API Settings PUT] Save result:", result);
     return NextResponse.json({ message: "Settings updated successfully" });
   } catch (error) {
     console.error("[API] PUT /api/settings error:", error);
