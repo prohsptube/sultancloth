@@ -1071,10 +1071,10 @@ export default function AdminDashboard() {
         )}
 
         {/* Tabs */}
-        <div className="flex gap-4 mb-8 border-b border-gray-200 justify-center overflow-x-auto">
+        <div className="flex flex-wrap gap-2 mb-8 border-b border-gray-200 justify-center">
           <button
             onClick={() => setActiveTab("dashboard")}
-            className={`px-4 py-2 font-medium transition whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition text-sm ${
               activeTab === "dashboard"
                 ? "text-red-600 border-b-2 border-red-600"
                 : "text-gray-600 hover:text-gray-800"
@@ -1084,7 +1084,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("products")}
-            className={`px-4 py-2 font-medium transition whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition text-sm ${
               activeTab === "products"
                 ? "text-red-600 border-b-2 border-red-600"
                 : "text-gray-600 hover:text-gray-800"
@@ -1094,7 +1094,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("hero")}
-            className={`px-4 py-2 font-medium transition ${
+            className={`px-3 py-2 font-medium transition text-sm ${
               activeTab === "hero"
                 ? "text-red-600 border-b-2 border-red-600"
                 : "text-gray-600 hover:text-gray-800"
@@ -1104,7 +1104,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("categories")}
-            className={`px-4 py-2 font-medium transition ${
+            className={`px-3 py-2 font-medium transition text-sm ${
               activeTab === "categories"
                 ? "text-red-600 border-b-2 border-red-600"
                 : "text-gray-600 hover:text-gray-800"
@@ -1114,17 +1114,17 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("navigation")}
-            className={`px-4 py-2 font-medium transition ${
+            className={`px-3 py-2 font-medium transition text-sm ${
               activeTab === "navigation"
                 ? "text-red-600 border-b-2 border-red-600"
                 : "text-gray-600 hover:text-gray-800"
             }`}
           >
-            Navigation Menu
+            Navigation
           </button>
           <button
             onClick={() => setActiveTab("orders")}
-            className={`px-4 py-2 font-medium transition ${
+            className={`px-3 py-2 font-medium transition text-sm ${
               activeTab === "orders"
                 ? "text-red-600 border-b-2 border-red-600"
                 : "text-gray-600 hover:text-gray-800"
@@ -1134,7 +1134,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("coupons")}
-            className={`px-4 py-2 font-medium transition whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition text-sm ${
               activeTab === "coupons"
                 ? "text-red-600 border-b-2 border-red-600"
                 : "text-gray-600 hover:text-gray-800"
@@ -1144,7 +1144,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("customers")}
-            className={`px-4 py-2 font-medium transition whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition text-sm ${
               activeTab === "customers"
                 ? "text-red-600 border-b-2 border-red-600"
                 : "text-gray-600 hover:text-gray-800"
@@ -1154,7 +1154,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("reviews")}
-            className={`px-4 py-2 font-medium transition whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition text-sm ${
               activeTab === "reviews"
                 ? "text-red-600 border-b-2 border-red-600"
                 : "text-gray-600 hover:text-gray-800"
@@ -1164,7 +1164,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("inventory")}
-            className={`px-4 py-2 font-medium transition whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition text-sm ${
               activeTab === "inventory"
                 ? "text-red-600 border-b-2 border-red-600"
                 : "text-gray-600 hover:text-gray-800"
@@ -1174,7 +1174,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("reports")}
-            className={`px-4 py-2 font-medium transition whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition text-sm ${
               activeTab === "reports"
                 ? "text-red-600 border-b-2 border-red-600"
                 : "text-gray-600 hover:text-gray-800"
@@ -1184,7 +1184,7 @@ export default function AdminDashboard() {
           </button>
           <button
             onClick={() => setActiveTab("shipping")}
-            className={`px-4 py-2 font-medium transition whitespace-nowrap ${
+            className={`px-3 py-2 font-medium transition text-sm ${
               activeTab === "shipping"
                 ? "text-red-600 border-b-2 border-red-600"
                 : "text-gray-600 hover:text-gray-800"
