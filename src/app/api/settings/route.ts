@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/lib/mongodb";
 import { checkAdminAuth } from "@/lib/auth";
 
+// Force dynamic rendering - no caching
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 // GET site settings
 export async function GET(request: NextRequest) {
   try {
@@ -35,7 +39,13 @@ export async function GET(request: NextRequest) {
       console.log("[API Settings GET] No settings found, using defaults");
     }
 
-    return NextResponse.json(settings);
+    return NextResponse.json(settings, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
   } catch (error) {
     console.error("[API] GET /api/settings error:", error);
     return NextResponse.json(
