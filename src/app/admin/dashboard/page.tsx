@@ -1026,7 +1026,7 @@ export default function AdminDashboard() {
       });
 
       if (response.ok) {
-        setCategoryFormData({ name: "", slug: "", description: "", parentId: null });
+        setCategoryFormData({ name: "", slug: "", description: "", image: "", parentId: null });
         setEditingCategoryId(null);
         setShowCategoryForm(false);
         setSelectedMainCategory("");
