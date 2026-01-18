@@ -4,14 +4,18 @@ import { mainNavigation } from "@/lib/navigation";
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("[SEED] Starting navigation seed...");
     const collection = await getNavigationCollection();
+    console.log("[SEED] Got collection:", collection.collectionName);
 
     // Clear existing navigation
-    await collection.deleteMany({});
+    const deleteResult = await collection.deleteMany({});
+    console.log("[SEED] Deleted existing items:", deleteResult.deletedCount);
 
     // Flatten and insert navigation items with hierarchy
     const itemsToInsert = [];
     let order = 0;
+    let totalInserted = 0;
 
     for (const mainItem of mainNavigation) {
       // Insert main menu item
@@ -28,7 +32,9 @@ export async function POST(request: NextRequest) {
 
       const mainResult = await collection.insertOne(mainDoc);
       const mainId = mainResult.insertedId;
+      console.log(`[SEED] Inserted main item: ${mainItem.label} with ID: ${mainId}`);
       order++;
+      totalInserted++;
 
       // Insert categories if they exist
       if (mainItem.categories) {
@@ -47,7 +53,9 @@ export async function POST(request: NextRequest) {
 
           const categoryResult = await collection.insertOne(categoryDoc);
           const categoryId = categoryResult.insertedId;
+          console.log(`[SEED]   Inserted category: ${category.label} with ID: ${categoryId}`);
           categoryOrder++;
+          totalInserted++;
 
           // Insert sub-items if they exist
           if (category.subItems) {
@@ -65,17 +73,21 @@ export async function POST(request: NextRequest) {
               };
 
               await collection.insertOne(subDoc);
+              console.log(`[SEED]     Inserted sub-item: ${subItem.label}`);
               subOrder++;
+              totalInserted++;
             }
           }
         }
       }
     }
 
+    console.log(`[SEED] COMPLETED! Total items inserted: ${totalInserted}`);
     return NextResponse.json(
       {
         success: true,
         message: `Seeded ${order} main navigation items and their subcategories`,
+        totalInserted,
       },
       { status: 200 }
     );

@@ -78,18 +78,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const navCollection = await getNavigationCollection();
 
-    // Get the highest order value for main level items
-    const lastMainItem = await navCollection
-      .findOne({ level: 1 }, { sort: { order: -1 } });
-    const nextOrder = (lastMainItem?.order || 0) + 1;
+    const level = body.level || 1;
+    const parentId = body.parentId || null;
 
-    // New items from admin form are always main menu items (level 1)
+    // Get the highest order value for items at the same level and parent
+    const filter = parentId 
+      ? { level, parentId } 
+      : { level, parentId: null };
+    
+    const lastItem = await navCollection
+      .findOne(filter, { sort: { order: -1 } });
+    const nextOrder = (lastItem?.order || 0) + 1;
+
     const result = await navCollection.insertOne({
       label: body.label,
       href: body.href,
-      level: 1,           // Main menu item
+      level,
       order: nextOrder,
-      parentId: null,     // No parent for main items
+      parentId,
       isActive: true,
       createdAt: new Date(),
       updatedAt: new Date(),

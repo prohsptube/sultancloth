@@ -120,6 +120,8 @@ export default function AdminDashboard() {
   const [navFormData, setNavFormData] = useState({
     label: "",
     href: "",
+    level: 1,
+    parentId: null as string | null,
   });
   const router = useRouter();
 
@@ -198,15 +200,22 @@ export default function AdminDashboard() {
         ? `/api/navigation/${editingNavId}`
         : "/api/navigation";
 
+      const payload = {
+        label: navFormData.label,
+        href: navFormData.href,
+        level: navFormData.level,
+        parentId: navFormData.parentId,
+      };
+
       const response = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify(navFormData),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
-        setNavFormData({ label: "", href: "" });
+        setNavFormData({ label: "", href: "", level: 1, parentId: null });
         setEditingNavId(null);
         setShowNavForm(false);
         await fetchNavigation();
@@ -224,12 +233,14 @@ export default function AdminDashboard() {
     setNavFormData({
       label: item.label,
       href: item.href,
+      level: item.level,
+      parentId: item.parentId || null,
     });
     setShowNavForm(true);
   };
 
   const handleDeleteNavigation = async (id: string) => {
-    if (!confirm("Delete this navigation item?")) return;
+    if (!confirm("Delete this navigation item and all its children?")) return;
 
     try {
       const response = await fetch(`/api/navigation/${id}`, {
@@ -238,19 +249,23 @@ export default function AdminDashboard() {
       });
 
       if (response.ok) {
-        setNavigationItems(navigationItems.filter((n) => n._id !== id));
+        const data = await response.json();
+        console.log(`Deleted ${data.deletedCount} items`);
+        await fetchNavigation(); // Refresh the entire list
       } else {
-        setError("Error deleting navigation item");
+        const error = await response.json();
+        setError("Error deleting navigation item: " + (error.error || "Unknown error"));
       }
     } catch (err) {
-      setError("Error deleting navigation item");
+      console.error("Delete error:", err);
+      setError("Error deleting navigation item: " + (err instanceof Error ? err.message : "Unknown error"));
     }
   };
 
   const handleCancelNavForm = () => {
     setShowNavForm(false);
     setEditingNavId(null);
-    setNavFormData({ label: "", href: "" });
+    setNavFormData({ label: "", href: "", level: 1, parentId: null });
   };
 
   const handleLogout = async () => {
@@ -1540,28 +1555,69 @@ export default function AdminDashboard() {
         {activeTab === "navigation" && (
           <div>
             <div className="mb-6 flex gap-2">
-              <button
-                onClick={async () => {
-                  try {
-                    const response = await fetch("/api/navigation/seed-main", {
-                      method: "POST",
-                      credentials: "include",
-                    });
-                    if (response.ok) {
-                      const data = await response.json();
-                      alert(data.message);
-                      await fetchNavigation();
-                    } else {
-                      alert("Failed to seed navigation");
+              {navigationItems.length === 0 && (
+                <button
+                  onClick={async () => {
+                    if (!confirm("This will clear existing navigation and load defaults. Continue?")) return;
+                    try {
+                      setNavLoading(true);
+                      const response = await fetch("/api/navigation/seed-main", {
+                        method: "POST",
+                        credentials: "include",
+                      });
+                      if (response.ok) {
+                        const data = await response.json();
+                        console.log("Seed response:", data);
+                        await fetchNavigation();
+                        alert(data.message || "Navigation seeded successfully!");
+                      } else {
+                        const error = await response.json();
+                        alert("Failed to seed navigation: " + (error.error || "Unknown error"));
+                      }
+                    } catch (err) {
+                      console.error("Seed error:", err);
+                      alert("Error seeding navigation: " + (err instanceof Error ? err.message : "Unknown error"));
+                    } finally {
+                      setNavLoading(false);
                     }
-                  } catch (err) {
-                    alert("Error seeding navigation");
-                  }
-                }}
-                className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition"
-              >
-                Seed Default Navigation
-              </button>
+                  }}
+                  className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition"
+                  disabled={navLoading}
+                >
+                  {navLoading ? "Seeding..." : "Seed Default Navigation"}
+                </button>
+              )}
+
+              {navigationItems.length > 0 && (
+                <button
+                  onClick={async () => {
+                    if (!confirm("Clear ALL navigation items? This cannot be undone!")) return;
+                    try {
+                      setNavLoading(true);
+                      const response = await fetch("/api/navigation/clear", {
+                        method: "POST",
+                        credentials: "include",
+                      });
+                      if (response.ok) {
+                        const data = await response.json();
+                        console.log("Clear response:", data);
+                        await fetchNavigation();
+                        alert(data.message || "Navigation cleared!");
+                      } else {
+                        alert("Failed to clear navigation");
+                      }
+                    } catch (err) {
+                      alert("Error clearing navigation");
+                    } finally {
+                      setNavLoading(false);
+                    }
+                  }}
+                  className="bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-yellow-700 transition"
+                  disabled={navLoading}
+                >
+                  Clear All Navigation
+                </button>
+              )}
               
               {!showNavForm && (
                 <button
@@ -1582,6 +1638,56 @@ export default function AdminDashboard() {
                 <form onSubmit={handleAddNavigation} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Type *
+                    </label>
+                    <select
+                      value={navFormData.level}
+                      onChange={(e) => {
+                        const level = parseInt(e.target.value);
+                        setNavFormData({ 
+                          ...navFormData, 
+                          level,
+                          parentId: level === 1 ? null : navFormData.parentId
+                        });
+                      }}
+                      className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                    >
+                      <option value={1}>Main Menu Item</option>
+                      <option value={2}>Category (Level 2)</option>
+                      <option value={3}>Sub-Category (Level 3)</option>
+                    </select>
+                  </div>
+
+                  {navFormData.level > 1 && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Parent Item *
+                      </label>
+                      <select
+                        value={navFormData.parentId || ""}
+                        onChange={(e) =>
+                          setNavFormData({ ...navFormData, parentId: e.target.value || null })
+                        }
+                        className="w-full px-3 py-2 border-2 border-red-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none bg-red-50 text-gray-800"
+                        required
+                      >
+                        <option value="">Select Parent</option>
+                        {navigationItems
+                          .filter((item) => item.level < navFormData.level)
+                          .map((item) => {
+                            const indent = "  ".repeat(item.level - 1);
+                            return (
+                              <option key={item._id} value={item._id}>
+                                {indent}{item.label} (Level {item.level})
+                              </option>
+                            );
+                          })}
+                      </select>
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Label *
                     </label>
                     <input
@@ -1590,8 +1696,8 @@ export default function AdminDashboard() {
                       onChange={(e) =>
                         setNavFormData({ ...navFormData, label: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600"
-                      placeholder="e.g., Men, Women, Collections"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 text-gray-800"
+                      placeholder="e.g., Men, Eastern Wear, Kurtas"
                     />
                   </div>
 
@@ -1605,8 +1711,8 @@ export default function AdminDashboard() {
                       onChange={(e) =>
                         setNavFormData({ ...navFormData, href: e.target.value })
                       }
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600"
-                      placeholder="e.g., /collections/men"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-red-600 text-gray-800"
+                      placeholder="e.g., /collections/mens-kurtas"
                     />
                   </div>
 
@@ -1645,36 +1751,59 @@ export default function AdminDashboard() {
                     <tr>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Label</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">URL</th>
+                      <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Level</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700">Order</th>
                       <th className="px-6 py-3 text-left text-sm font-semibold text-gray-700 w-20">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-200">
-                    {navigationItems.map((item) => (
-                      <tr key={item._id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 text-sm font-medium text-gray-800">
-                          {item.label}
-                        </td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{item.href}</td>
-                        <td className="px-6 py-4 text-sm text-gray-600">{item.order || 0}</td>
-                        <td className="px-6 py-4 text-sm flex gap-2">
-                          <button
-                            onClick={() => handleEditNavigation(item)}
-                            className="text-blue-600 hover:text-blue-800 transition p-1"
-                            title="Edit"
-                          >
-                            <Edit size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteNavigation(item._id)}
-                            className="text-red-600 hover:text-red-800 transition p-1"
-                            title="Delete"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {navigationItems.map((item) => {
+                      const indent = "  ".repeat(item.level - 1);
+                      const parentItem = item.parentId
+                        ? navigationItems.find((n) => n._id === item.parentId)
+                        : null;
+                      return (
+                        <tr key={item._id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4 text-sm font-medium text-gray-800">
+                            <span style={{ paddingLeft: `${(item.level - 1) * 20}px` }}>
+                              {item.level > 1 && "↳ "}{item.label}
+                            </span>
+                            {parentItem && (
+                              <div className="text-xs text-gray-500 mt-1" style={{ paddingLeft: `${(item.level - 1) * 20}px` }}>
+                                Parent: {parentItem.label}
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{item.href}</td>
+                          <td className="px-6 py-4 text-sm text-gray-600">
+                            <span className={`px-2 py-1 rounded text-xs ${
+                              item.level === 1 ? "bg-blue-100 text-blue-800" :
+                              item.level === 2 ? "bg-green-100 text-green-800" :
+                              "bg-purple-100 text-purple-800"
+                            }`}>
+                              Level {item.level}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-600">{item.order || 0}</td>
+                          <td className="px-6 py-4 text-sm flex gap-2">
+                            <button
+                              onClick={() => handleEditNavigation(item)}
+                              className="text-blue-600 hover:text-blue-800 transition p-1"
+                              title="Edit"
+                            >
+                              <Edit size={18} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteNavigation(item._id)}
+                              className="text-red-600 hover:text-red-800 transition p-1"
+                              title="Delete"
+                            >
+                              <Trash2 size={18} />
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>

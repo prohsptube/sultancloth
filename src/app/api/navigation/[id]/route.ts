@@ -14,17 +14,24 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
     const body = await request.json();
     const navCollection = await getNavigationCollection();
 
+    const updateData: any = {
+      label: body.label,
+      href: body.href,
+      isActive: body.isActive !== undefined ? body.isActive : true,
+      updatedAt: new Date(),
+    };
+
+    // Allow updating level and parentId if provided
+    if (body.level !== undefined) {
+      updateData.level = body.level;
+    }
+    if (body.parentId !== undefined) {
+      updateData.parentId = body.parentId;
+    }
+
     const result = await navCollection.updateOne(
       { _id: new ObjectId(id) },
-      {
-        $set: {
-          label: body.label,
-          href: body.href,
-          // Keep level, parentId, and order unchanged for structural integrity
-          isActive: body.isActive !== undefined ? body.isActive : true,
-          updatedAt: new Date(),
-        },
-      }
+      { $set: updateData }
     );
 
     if (result.matchedCount === 0) {
@@ -48,13 +55,30 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
 
     const { id } = await params;
     const navCollection = await getNavigationCollection();
-    const result = await navCollection.deleteOne({ _id: new ObjectId(id) });
+    
+    // Find all child items recursively
+    const itemsToDelete = [new ObjectId(id)];
+    const findChildren = async (parentId: ObjectId) => {
+      const children = await navCollection.find({ parentId: parentId.toString() }).toArray();
+      for (const child of children) {
+        itemsToDelete.push(child._id);
+        await findChildren(child._id);
+      }
+    };
+    
+    await findChildren(new ObjectId(id));
+    
+    // Delete all items (parent + children)
+    const result = await navCollection.deleteMany({ 
+      _id: { $in: itemsToDelete } 
+    });
 
-    if (result.deletedCount === 0) {
-      return NextResponse.json({ error: "Navigation item not found" }, { status: 404 });
-    }
+    console.log(`[DELETE] Removed ${result.deletedCount} navigation items`);
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ 
+      success: true, 
+      deletedCount: result.deletedCount 
+    });
   } catch (error) {
     console.error("[API] DELETE /api/navigation/[id] error:", error);
     return NextResponse.json(
