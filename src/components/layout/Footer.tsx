@@ -2,6 +2,10 @@
 import Link from "next/link";
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react";
 
+// Ensure server-side fetch runs per request (no stale static build)
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 interface SiteSettings {
   storeName: string;
   email: string;
