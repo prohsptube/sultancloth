@@ -1,9 +1,6 @@
 // components/layout/Footer.tsx
-"use client";
-
 import Link from "next/link";
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react";
-import { useState, useEffect } from "react";
 
 interface SiteSettings {
   storeName: string;
@@ -15,41 +12,40 @@ interface SiteSettings {
   twitter: string;
 }
 
-export function Footer() {
-  const [settings, setSettings] = useState<SiteSettings>({
-    storeName: "Sultan Tag",
-    email: "info@sultantag.com",
-    phone: "+92 300 1234567",
-    address: "Karachi, Pakistan",
-    facebook: "",
-    instagram: "",
-    twitter: ""
-  });
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await fetch("/api/settings");
-        const data = await res.json();
-        console.log("[Footer] Fetched settings:", data);
-        if (data && !data.error) {
-          setSettings({
-            storeName: data.storeName || "Sultan Tag",
-            email: data.email || "info@sultantag.com",
-            phone: data.phone || "+92 300 1234567",
-            address: data.address || "Karachi, Pakistan",
-            facebook: data.facebook || "",
-            instagram: data.instagram || "",
-            twitter: data.twitter || ""
-          });
-        }
-      } catch (err) {
-        console.error("[Footer] Failed to fetch settings:", err);
-      }
-    };
+async function fetchSettings(): Promise<SiteSettings> {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    const res = await fetch(`${baseUrl}/api/settings`, {
+      cache: 'no-store'
+    });
+    const data = await res.json();
+    console.log("[Footer] Server-fetched settings:", data);
     
-    fetchSettings();
-  }, []);
+    return {
+      storeName: data.storeName || "Sultan Tag",
+      email: data.email || "info@sultantag.com",
+      phone: data.phone || "+92 300 1234567",
+      address: data.address || "Karachi, Pakistan",
+      facebook: data.facebook || "",
+      instagram: data.instagram || "",
+      twitter: data.twitter || ""
+    };
+  } catch (err) {
+    console.error("[Footer] Failed to fetch settings:", err);
+    return {
+      storeName: "Sultan Tag",
+      email: "info@sultantag.com",
+      phone: "+92 300 1234567",
+      address: "Karachi, Pakistan",
+      facebook: "",
+      instagram: "",
+      twitter: ""
+    };
+  }
+}
+
+export async function Footer() {
+  const settings = await fetchSettings();
 
   return (
     <footer className="border-t border-zinc-800 bg-black">
@@ -118,47 +114,53 @@ export function Footer() {
         </div>
 
         {/* Social Media & Copyright */}
-        <div className="border-t border-zinc-800 pt-6 flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="border-t border-zinc-800 pt-6 space-y-4">
           <div className="text-xs text-zinc-400">
             © {new Date().getFullYear()} {settings.storeName}. All rights reserved.
           </div>
           
-          {/* Social Icons */}
+          {/* Social Links - Both Icons and Text */}
           {(settings.facebook || settings.instagram || settings.twitter) && (
-            <div className="flex items-center gap-4">
-              {settings.facebook && (
-                <a
-                  href={settings.facebook}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-zinc-400 hover:text-red-500 transition"
-                  aria-label="Facebook"
-                >
-                  <Facebook className="h-5 w-5" />
-                </a>
-              )}
-              {settings.instagram && (
-                <a
-                  href={settings.instagram}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-zinc-400 hover:text-red-500 transition"
-                  aria-label="Instagram"
-                >
-                  <Instagram className="h-5 w-5" />
-                </a>
-              )}
-              {settings.twitter && (
-                <a
-                  href={settings.twitter}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-zinc-400 hover:text-red-500 transition"
-                  aria-label="Twitter"
-                >
-                  <Twitter className="h-5 w-5" />
-                </a>
-              )}
+            <div className="space-y-3">
+              <div className="text-zinc-400 text-sm font-semibold">Follow Us</div>
+              <div className="flex flex-wrap items-center gap-6">
+                {settings.facebook && (
+                  <a
+                    href={settings.facebook}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-zinc-400 hover:text-red-500 transition"
+                    aria-label="Facebook"
+                  >
+                    <Facebook className="h-5 w-5" />
+                    <span className="text-sm">Facebook</span>
+                  </a>
+                )}
+                {settings.instagram && (
+                  <a
+                    href={settings.instagram}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-zinc-400 hover:text-red-500 transition"
+                    aria-label="Instagram"
+                  >
+                    <Instagram className="h-5 w-5" />
+                    <span className="text-sm">Instagram</span>
+                  </a>
+                )}
+                {settings.twitter && (
+                  <a
+                    href={settings.twitter}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-zinc-400 hover:text-red-500 transition"
+                    aria-label="Twitter"
+                  >
+                    <Twitter className="h-5 w-5" />
+                    <span className="text-sm">Twitter</span>
+                  </a>
+                )}
+              </div>
             </div>
           )}
         </div>
