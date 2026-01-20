@@ -156,13 +156,13 @@ export default async function HomePage() {
 
       <Container>
         <section className="py-12">
-          <div className="text-center space-y-3 mb-8">
+          <div className="text-center space-y-3 mb-12">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-600">
               What would you like to explore?
             </p>
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Shop by category</h2>
             <p className="text-sm text-gray-600 max-w-2xl mx-auto">
-              Jump straight to curated collections. Links open instantly; no waiting for dropdowns.
+              Discover our curated collections. Jump straight to the products you love.
             </p>
           </div>
 
@@ -171,7 +171,7 @@ export default async function HomePage() {
               No categories available at the moment.
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-0">
               {homepageCategories.map((category) => (
                 <CategoryCard key={category._id} category={category} />
               ))}

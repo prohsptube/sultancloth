@@ -2,19 +2,12 @@
 
 import Link from "next/link";
 
-type Subcategory = {
-  label: string;
-  href: string;
-};
-
 type CategoryCardProps = {
   category: {
     _id: string;
     title: string;
     description: string;
     image?: string;
-    subcategories: Subcategory[];
-    columnsPerRow: number;
     products: {
       _id: string;
       name: string;
@@ -30,44 +23,33 @@ type CategoryCardProps = {
 
 export function CategoryCard({ category }: CategoryCardProps) {
   return (
-    <div className="rounded-xl border-2 border-red-200 bg-white shadow-sm transition hover:border-red-600 hover:shadow-md overflow-hidden">
-      {/* Title and image */}
-      <div className="px-5 pt-5 flex items-start gap-4 border-b border-red-100">
-        <div className="flex-1">
-          <h3 className="text-xl font-bold text-gray-900 mb-2">{category.title}</h3>
-        </div>
-        {category.image && (
-          <div className="w-24 h-24 rounded-lg overflow-hidden border border-red-100 flex-shrink-0">
-            <img
-              src={category.image}
-              alt={category.title}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-          </div>
-        )}
+    <div className="w-full mb-12">
+      {/* Title Section */}
+      <div className="mb-6 pb-4 border-b-2 border-red-200">
+        <h2 className="text-3xl md:text-4xl font-bold text-gray-900">{category.title}</h2>
       </div>
 
-      {/* Products grid */}
-      <div className="px-5 py-4">
+      {/* Products Grid - 4 columns */}
+      <div className="w-full">
         {category.products.length === 0 ? (
-          <p className="text-sm text-gray-500">No products selected for this section yet.</p>
+          <div className="text-center py-12 text-gray-500">
+            <p className="text-sm">No products selected for this section yet.</p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {category.products.map((p) => (
               <Link
                 key={p._id}
                 href={`/product/${p.slug || p._id}`}
-                className="flex gap-3 rounded-lg border border-red-100 bg-white p-3 transition hover:border-red-500 hover:shadow"
+                className="group flex flex-col rounded-lg border border-red-100 bg-white overflow-hidden transition hover:border-red-500 hover:shadow-lg"
               >
-                <div className="w-20 h-24 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+                {/* Product Image */}
+                <div className="w-full h-64 bg-gray-100 overflow-hidden">
                   {p.image ? (
                     <img
                       src={p.image}
                       alt={p.name}
-                      className="w-full h-full object-cover"
+                      className="w-full h-full object-cover group-hover:scale-105 transition"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
                       }}
@@ -78,12 +60,21 @@ export function CategoryCard({ category }: CategoryCardProps) {
                     </div>
                   )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-semibold text-gray-900 truncate">{p.name}</div>
+
+                {/* Product Info */}
+                <div className="p-4 flex flex-col flex-grow">
+                  <div className="text-sm font-semibold text-gray-900 line-clamp-2 mb-2">
+                    {p.name}
+                  </div>
+                  
                   {p.description && (
-                    <div className="text-xs text-gray-600 line-clamp-2">{p.description}</div>
+                    <div className="text-xs text-gray-600 line-clamp-2 mb-3">
+                      {p.description}
+                    </div>
                   )}
-                  <div className="text-sm font-bold text-red-600 mt-1">
+
+                  {/* Price */}
+                  <div className="text-sm font-bold text-red-600 mt-auto">
                     {p.salePrice ? (
                       <>
                         Rs. {p.salePrice}

@@ -2397,83 +2397,65 @@ export default function AdminDashboard() {
               {showHomepageCategoryForm && (
                 <form onSubmit={handleAddHomepageCategory} className="mb-8 p-6 border rounded-lg bg-gray-50">
                   <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    {editingHomepageCategoryId ? "Edit Category" : "Add New Category"}
+                    {editingHomepageCategoryId ? "Edit Category Section" : "Add New Category Section"}
                   </h3>
                   <div className="space-y-4">
+                    {/* Title - Always Required & Editable */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Select Category</label>
-                      <select
-                        value={homepageCategoryFormData.categoryId || ""}
-                        onChange={(e) => {
-                          const selectedCat = categories.find(cat => cat._id === e.target.value);
-                          if (selectedCat) {
-                            setHomepageCategoryFormData({
-                              ...homepageCategoryFormData,
-                              categoryId: selectedCat._id,
-                              title: selectedCat.name,
-                              description: selectedCat.description || "",
-                              image: selectedCat.image || "",
-                              subcategories: [],
-                              productIds: [],
-                            });
-                          } else {
-                            setHomepageCategoryFormData({
-                              ...homepageCategoryFormData,
-                              categoryId: null,
-                              title: "",
-                              description: "",
-                              image: "",
-                              subcategories: [],
-                              productIds: [],
-                            });
-                          }
-                        }}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
-                      >
-                        <option value="">-- Select a category --</option>
-                        {categories.map((cat) => (
-                          <option key={cat._id} value={cat._id}>
-                            {cat.name}
-                          </option>
-                        ))}
-                      </select>
-                      <p className="text-xs text-gray-500 mt-1">Choose from existing categories or leave blank to create custom</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Display Title (Optional Override)</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Section Title <span className="text-red-600">*</span>
+                      </label>
                       <input
                         type="text"
                         required
                         value={homepageCategoryFormData.title}
                         onChange={(e) => setHomepageCategoryFormData({...homepageCategoryFormData, title: e.target.value})}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
-                        placeholder="e.g., Men's Collection"
+                        placeholder="e.g., Men's Collection, Eastern Wear, Summer Sale"
                       />
-                      <p className="text-xs text-gray-500 mt-1">This title will appear on the homepage</p>
+                      <p className="text-xs text-gray-500 mt-1">Custom title for this section (shown on homepage)</p>
                     </div>
+
+                    {/* Category Selection - Optional */}
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Description (Tagline)</label>
-                      <textarea
-                        value={homepageCategoryFormData.description}
-                        onChange={(e) => setHomepageCategoryFormData({...homepageCategoryFormData, description: e.target.value})}
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Link to Existing Category <span className="text-xs text-gray-500 font-normal">(Optional)</span>
+                      </label>
+                      <select
+                        value={homepageCategoryFormData.categoryId || ""}
+                        onChange={(e) => {
+                          const selectedCat = categories.find(cat => cat._id === e.target.value);
+                          if (selectedCat) {
+                            // Only auto-fill fields if not already customized
+                            if (!homepageCategoryFormData.title || homepageCategoryFormData.title === selectedCat.name) {
+                              setHomepageCategoryFormData({
+                                ...homepageCategoryFormData,
+                                categoryId: selectedCat._id,
+                                title: selectedCat.name,
+                              });
+                            } else {
+                              setHomepageCategoryFormData({
+                                ...homepageCategoryFormData,
+                                categoryId: selectedCat._id,
+                              });
+                            }
+                          } else {
+                            setHomepageCategoryFormData({
+                              ...homepageCategoryFormData,
+                              categoryId: null,
+                            });
+                          }
+                        }}
                         className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
-                        rows={2}
-                        placeholder="e.g., Eastern and western essentials"
-                      />
-                      <p className="text-xs text-gray-500 mt-1">Short description shown below the title</p>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Image URL</label>
-                      <input
-                        type="text"
-                        value={homepageCategoryFormData.image}
-                        onChange={(e) => setHomepageCategoryFormData({...homepageCategoryFormData, image: e.target.value})}
-                        className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-red-500 text-gray-900"
-                        placeholder="https://example.com/image.jpg"
-                      />
-                      {homepageCategoryFormData.image && (
-                        <img src={homepageCategoryFormData.image} alt="Preview" className="mt-2 h-20 rounded border" onError={(e) => e.currentTarget.style.display = 'none'} />
-                      )}
+                      >
+                        <option value="">-- No category link --</option>
+                        {categories.map((cat) => (
+                          <option key={cat._id} value={cat._id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-xs text-gray-500 mt-1">Optional: Link this section to an existing category (for SEO/navigation)</p>
                     </div>
 
                     {/* Product Selection */}
