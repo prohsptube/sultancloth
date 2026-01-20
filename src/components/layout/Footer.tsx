@@ -14,8 +14,8 @@ interface SiteSettings {
 
 async function fetchSettings(): Promise<SiteSettings> {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/settings`, {
+    // Use relative URL for server-side fetch to work on any domain
+    const res = await fetch(`/api/settings`, {
       cache: 'no-store'
     });
     const data = await res.json();
