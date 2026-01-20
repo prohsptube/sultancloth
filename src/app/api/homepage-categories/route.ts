@@ -52,6 +52,8 @@ export async function POST(request: NextRequest) {
       order: newOrder,
       columnsPerRow: body.columnsPerRow || 2, // 1, 2, or 3
       isActive: body.isActive !== false,
+      productIds: body.productIds || [],
+      showDescription: body.showDescription ?? false,
       createdAt: new Date(),
       updatedAt: new Date(),
     });

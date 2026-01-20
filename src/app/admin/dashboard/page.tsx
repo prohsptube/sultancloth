@@ -41,6 +41,8 @@ interface HomepageCategory {
   order: number;
   columnsPerRow: 1 | 2 | 3;
   isActive: boolean;
+  productIds?: string[];
+  showDescription?: boolean;
 }
 
 interface HeroSlide {
@@ -184,6 +186,8 @@ export default function AdminDashboard() {
     subcategories: [] as { label: string; href: string; }[],
     columnsPerRow: 2 as 1 | 2 | 3,
     isActive: true,
+    productIds: [] as string[],
+    showDescription: false,
   });
   const [loading, setLoading] = useState(true);
   const [heroLoading, setHeroLoading] = useState(false);
@@ -475,6 +479,8 @@ export default function AdminDashboard() {
           subcategories: [],
           columnsPerRow: 2,
           isActive: true,
+          productIds: [],
+          showDescription: false,
         });
         setEditingHomepageCategoryId(null);
         setShowHomepageCategoryForm(false);
@@ -2378,6 +2384,8 @@ export default function AdminDashboard() {
                       subcategories: [],
                       columnsPerRow: 2,
                       isActive: true,
+                      productIds: [],
+                      showDescription: false,
                     });
                   }}
                   className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center gap-2"
@@ -2405,7 +2413,8 @@ export default function AdminDashboard() {
                               title: selectedCat.name,
                               description: selectedCat.description || "",
                               image: selectedCat.image || "",
-                              subcategories: [] // Will be populated from products
+                              subcategories: [],
+                              productIds: [],
                             });
                           } else {
                             setHomepageCategoryFormData({
@@ -2414,7 +2423,8 @@ export default function AdminDashboard() {
                               title: "",
                               description: "",
                               image: "",
-                              subcategories: []
+                              subcategories: [],
+                              productIds: [],
                             });
                           }
                         }}
@@ -2464,6 +2474,47 @@ export default function AdminDashboard() {
                       {homepageCategoryFormData.image && (
                         <img src={homepageCategoryFormData.image} alt="Preview" className="mt-2 h-20 rounded border" onError={(e) => e.currentTarget.style.display = 'none'} />
                       )}
+                    </div>
+
+                    {/* Product Selection */}
+                    <div className="border-t pt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Select Products to Display
+                        <span className="text-xs font-normal text-gray-500 ml-2">(Choose products for this section)</span>
+                      </label>
+                      <div className="max-h-64 overflow-y-auto border rounded-lg p-3 bg-gray-50">
+                        {products.length === 0 ? (
+                          <p className="text-sm text-gray-500">No products available. Add products first.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {products.map((product) => (
+                              <label key={product._id} className="flex items-start gap-3 p-2 rounded bg-white border hover:border-red-300 transition cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={homepageCategoryFormData.productIds.includes(product._id)}
+                                  onChange={(e) => {
+                                    const newIds = e.target.checked
+                                      ? [...homepageCategoryFormData.productIds, product._id]
+                                      : homepageCategoryFormData.productIds.filter(id => id !== product._id);
+                                    setHomepageCategoryFormData({...homepageCategoryFormData, productIds: newIds});
+                                  }}
+                                  className="mt-1 rounded text-red-600 focus:ring-red-500"
+                                />
+                                <div className="flex-1 min-w-0">
+                                  <div className="text-sm font-medium text-gray-900 truncate">{product.name}</div>
+                                  <div className="text-xs text-gray-500">
+                                    {product.category} • Rs. {product.salePrice || product.price}
+                                  </div>
+                                </div>
+                                {product.image && (
+                                  <img src={product.image} alt={product.name} className="w-12 h-12 object-cover rounded" onError={(e) => e.currentTarget.style.display = 'none'} />
+                                )}
+                              </label>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Selected: {homepageCategoryFormData.productIds.length} product(s)</p>
                     </div>
                     
                     {/* Subcategories Section */}
@@ -2572,6 +2623,8 @@ export default function AdminDashboard() {
                             subcategories: [],
                             columnsPerRow: 2,
                             isActive: true,
+                            productIds: [],
+                            showDescription: false,
                           });
                         }}
                         className="px-6 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition"
@@ -2630,6 +2683,8 @@ export default function AdminDashboard() {
                             subcategories: cat.subcategories || [],
                             columnsPerRow: cat.columnsPerRow,
                             isActive: cat.isActive,
+                            productIds: cat.productIds || [],
+                            showDescription: cat.showDescription ?? false,
                           });
                           setShowHomepageCategoryForm(true);
                         }}

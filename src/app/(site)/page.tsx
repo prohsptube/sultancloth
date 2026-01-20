@@ -1,9 +1,9 @@
 // src/app/page.tsx
-import Link from "next/link";
 import { Container } from "@/components/layout/Container";
 import { HeroCarousel } from "@/components/layout/HeroCarousel";
 import { CategoryCard } from "@/components/homepage/CategoryCard";
 import { getHeroSlidesCollection, connectToDatabase } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 
 type HeroSlide = {
   _id?: string;
@@ -27,12 +27,27 @@ type HomepageCategory = {
   order: number;
   columnsPerRow: number;
   isActive: boolean;
+  productIds: string[];
+  showDescription?: boolean;
+};
+
+type HomepageCategoryWithProducts = HomepageCategory & {
+  products: {
+    _id: string;
+    name: string;
+    category?: string;
+    price?: number;
+    salePrice?: number;
+    image?: string;
+    description?: string;
+    slug?: string;
+  }[];
 };
 
 export default async function HomePage() {
   // Fetch hero slides directly on the server for instant render
   let heroSlides: HeroSlide[] = [];
-  let homepageCategories: HomepageCategory[] = [];
+  let homepageCategories: HomepageCategoryWithProducts[] = [];
 
   try {
     const slidesCol = await getHeroSlidesCollection();
@@ -58,10 +73,11 @@ export default async function HomePage() {
     console.error("[HomePage] Failed to fetch hero slides from DB:", error);
   }
 
-  // Fetch homepage categories from database
+  // Fetch homepage categories + their selected products from database
   try {
     const { db } = await connectToDatabase();
     const categoriesCol = db.collection("homepage_categories");
+    const productsCol = db.collection("products");
     
     const rawCategories = await categoriesCol
       .find({ isActive: true })
@@ -78,7 +94,58 @@ export default async function HomePage() {
       order: cat.order || 0,
       columnsPerRow: cat.columnsPerRow || 2,
       isActive: cat.isActive !== false,
+      productIds: Array.isArray(cat.productIds) ? cat.productIds.map(String) : [],
+      showDescription: cat.showDescription,
+      products: [],
     }));
+
+    const allProductIds = Array.from(
+      new Set(
+        homepageCategories.flatMap((c) => c.productIds).filter(Boolean)
+      )
+    );
+
+    if (allProductIds.length > 0) {
+      const objectIds = allProductIds
+        .map((id) => {
+          try {
+            return new ObjectId(id);
+          } catch {
+            return null;
+          }
+        })
+        .filter((id): id is ObjectId => id !== null);
+
+      if (objectIds.length > 0) {
+        const rawProducts = await productsCol
+          .find({ _id: { $in: objectIds } })
+          .toArray();
+
+        const productMap = new Map(
+          rawProducts.map((p) => [String(p._id), p])
+        );
+
+        homepageCategories = homepageCategories.map((cat) => ({
+          ...cat,
+          products: cat.productIds
+            .map((id) => {
+              const p = productMap.get(id);
+              if (!p) return null;
+              return {
+                _id: String(p._id),
+                name: p.name,
+                category: p.category,
+                price: p.price,
+                salePrice: p.salePrice,
+                image: p.image,
+                description: p.description,
+                slug: p.slug || p.category,
+              };
+            })
+            .filter(Boolean) as HomepageCategoryWithProducts["products"],
+        }));
+      }
+    }
   } catch (error) {
     console.error("[HomePage] Failed to fetch homepage categories from DB:", error);
   }
