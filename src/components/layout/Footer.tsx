@@ -1,6 +1,7 @@
 // components/layout/Footer.tsx
 import Link from "next/link";
 import { Facebook, Instagram, Twitter, Mail, Phone, MapPin } from "lucide-react";
+import { connectToDatabase } from "@/lib/mongodb";
 
 // Ensure server-side fetch runs per request (no stale static build)
 export const dynamic = "force-dynamic";
@@ -18,24 +19,20 @@ interface SiteSettings {
 
 async function fetchSettings(): Promise<SiteSettings> {
   try {
-    // Use relative URL for server-side fetch to work on any domain
-    const res = await fetch(`/api/settings`, {
-      cache: 'no-store'
-    });
-    const data = await res.json();
-    console.log("[Footer] Server-fetched settings:", data);
-    
+    const { db } = await connectToDatabase();
+    const data: any = await db.collection("site_settings").findOne({ type: "main" });
+
     return {
-      storeName: data.storeName || "Sultan Tag",
-      email: data.email || "info@sultantag.com",
-      phone: data.phone || "+92 300 1234567",
-      address: data.address || "Karachi, Pakistan",
-      facebook: data.facebook || "",
-      instagram: data.instagram || "",
-      twitter: data.twitter || ""
+      storeName: data?.storeName || "Sultan Tag",
+      email: data?.email || "info@sultantag.com",
+      phone: data?.phone || "+92 300 1234567",
+      address: data?.address || "Karachi, Pakistan",
+      facebook: data?.facebook || "",
+      instagram: data?.instagram || "",
+      twitter: data?.twitter || ""
     };
   } catch (err) {
-    console.error("[Footer] Failed to fetch settings:", err);
+    console.error("[Footer] Failed to read settings from DB:", err);
     return {
       storeName: "Sultan Tag",
       email: "info@sultantag.com",
