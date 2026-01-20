@@ -164,7 +164,6 @@ export default async function HomePage() {
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-red-600">
               What would you like to explore?
             </p>
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900">Shop by category</h2>
             <p className="text-sm text-gray-600 max-w-2xl mx-auto">
               Discover our curated collections. Jump straight to the products you love.
             </p>
