@@ -5,6 +5,10 @@ import { CategoryCard } from "@/components/homepage/CategoryCard";
 import { getHeroSlidesCollection, connectToDatabase } from "@/lib/mongodb";
 import { ObjectId } from "mongodb";
 
+// Ensure homepage always renders with fresh data from MongoDB
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 type HeroSlide = {
   _id?: string;
   id?: number;
